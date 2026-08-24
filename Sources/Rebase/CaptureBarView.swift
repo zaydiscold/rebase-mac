@@ -3,6 +3,8 @@ import SwiftUI
 struct CaptureBarView: View {
     @Binding var selectedLane: Lane
     @Binding var draft: String
+    var onSubmit: () -> Void
+    @Environment(\.palette) private var palette
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -12,21 +14,24 @@ struct CaptureBarView: View {
                 }
             }
 
-            TextField("Write anything…", text: $draft, axis: .vertical)
-                .textFieldStyle(.plain)
-                .font(Theme.bodyFont)
-                .foregroundStyle(Theme.ink)
-                .lineLimit(1...5)
+            CaptureField(text: $draft, onSubmit: onSubmit, ink: palette.ink, muted: palette.muted)
+                .frame(minHeight: 22)
 
-            Text("Return ↵")
-                .font(Theme.stampFont)
-                .foregroundStyle(Theme.muted)
+            Button(action: onSubmit) {
+                Image(systemName: "arrow.uturn.up")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(palette.ink)
+                    .frame(width: 28, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Add to \(selectedLane.title)")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Theme.paper2)
+        .background(palette.paper2)
         .overlay(alignment: .top) {
-            Rectangle().fill(Theme.hairline).frame(height: 1)
+            Rectangle().fill(Theme.orange.opacity(0.45)).frame(height: 1)
         }
     }
 
@@ -35,19 +40,24 @@ struct CaptureBarView: View {
         return Button {
             selectedLane = lane
         } label: {
-            Text(lane.title)
-                .font(Theme.chromeFont)
-                .foregroundStyle(selected ? Theme.paper : Theme.ink)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(selected ? Theme.caret : Color.clear)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                        .stroke(selected ? Color.clear : Theme.hairline, lineWidth: 1)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            HStack(spacing: 6) {
+                Text(lane.title)
+                    .font(Theme.chromeFont)
+                Text(lane.shortcut)
+                    .font(Theme.stampFont)
+                    .opacity(selected ? 0.9 : 0.55)
+            }
+            .foregroundStyle(selected ? palette.paper : palette.ink)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(selected ? Theme.orange : Color.clear)
+            .overlay {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .stroke(selected ? Color.clear : Theme.purple.opacity(0.55), lineWidth: 1)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
         }
         .buttonStyle(.plain)
-        .help("\(lane.title) \(lane.shortcut)")
+        .help("\(lane.shortcut) writes the next Return into \(lane.title)")
     }
 }

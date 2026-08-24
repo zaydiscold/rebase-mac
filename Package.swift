@@ -12,7 +12,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Rebase",
-            path: "Sources/Rebase"
+            path: "Sources/Rebase",
+            resources: [
+                .process("Resources"),
+            ]
         ),
     ]
 )

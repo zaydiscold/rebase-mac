@@ -1,39 +1,39 @@
 import SwiftUI
 
+struct DayFrameKey: PreferenceKey {
+    static let defaultValue: [String: CGRect] = [:]
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { $1 })
+    }
+}
+
 struct DaySectionView: View {
     let day: PrototypeDay
+    var onToggle: ((String, Lane, String) -> Void)?
+    var onStar: ((String, Lane, String) -> Void)?
+    @Environment(\.palette) private var palette
+    @Environment(\.laneFractions) private var fractions
 
     var body: some View {
         VStack(spacing: 0) {
-            LaneMaxHeightLayout {
-                LaneColumnView(entries: day.ideas)
-                LaneColumnView(entries: day.life)
-                LaneColumnView(entries: day.work)
-            }
-            .background(Theme.paper)
-            .overlay(alignment: .top) {
-                laneHairlines
+            LaneMaxHeightLayout(fractions: fractions) {
+                LaneColumnView(entries: day.ideas, lane: .ideas, dayId: day.id, onToggle: onToggle, onStar: onStar)
+                LaneColumnView(entries: day.life, lane: .life, dayId: day.id, onToggle: onToggle, onStar: onStar)
+                LaneColumnView(entries: day.work, lane: .work, dayId: day.id, onToggle: onToggle, onStar: onStar)
             }
             DateDividerView(day: day)
         }
-    }
-
-    private var laneHairlines: some View {
-        GeometryReader { geo in
-            let usable = geo.size.width - 2
-            let x1 = (usable * Theme.ideasFraction).rounded(.down)
-            let x2 = x1 + 1 + (usable * Theme.lifeFraction).rounded(.down)
-            ZStack(alignment: .topLeading) {
-                Rectangle()
-                    .fill(Theme.hairline)
-                    .frame(width: 1, height: geo.size.height)
-                    .offset(x: x1)
-                Rectangle()
-                    .fill(Theme.hairline)
-                    .frame(width: 1, height: geo.size.height)
-                    .offset(x: x2)
+        .background(palette.paper)
+        .overlay(alignment: .top) {
+            LaneHairlines()
+        }
+        .background {
+            GeometryReader { proxy in
+                Color.clear.preference(
+                    key: DayFrameKey.self,
+                    value: [day.id: proxy.frame(in: .scrollView(axis: .vertical))]
+                )
             }
         }
-        .allowsHitTesting(false)
     }
 }

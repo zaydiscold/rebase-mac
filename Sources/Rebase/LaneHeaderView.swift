@@ -1,45 +1,42 @@
 import SwiftUI
 
 struct LaneHeaderView: View {
+    @Binding var selectedLane: Lane
+    @Environment(\.palette) private var palette
+    @Environment(\.laneFractions) private var fractions
+
     var body: some View {
-        LaneMaxHeightLayout {
+        LaneMaxHeightLayout(fractions: fractions) {
             header(.ideas)
             header(.life)
             header(.work)
         }
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Theme.hairline).frame(height: 1)
+            Rectangle().fill(palette.dateRule).frame(height: 1)
         }
         .overlay {
-            GeometryReader { geo in
-                let usable = geo.size.width - 2
-                let x1 = (usable * Theme.ideasFraction).rounded(.down)
-                let x2 = x1 + 1 + (usable * Theme.lifeFraction).rounded(.down)
-                ZStack(alignment: .topLeading) {
-                    Rectangle().fill(Theme.hairline).frame(width: 1, height: geo.size.height).offset(x: x1)
-                    Rectangle().fill(Theme.hairline).frame(width: 1, height: geo.size.height).offset(x: x2)
-                }
-            }
-            .allowsHitTesting(false)
+            LaneHairlines()
         }
-        .background(Theme.paper)
+        .background(palette.paper)
     }
 
     private func header(_ lane: Lane) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        let selected = selectedLane == lane
+        return Button {
+            selectedLane = lane
+        } label: {
             Text(lane.title.uppercased())
-                .font(Theme.labelFont)
-                .tracking(1.4)
-                .foregroundStyle(Theme.muted)
-            Spacer(minLength: 0)
-            Text(lane.shortcut)
-                .font(Theme.stampFont)
-                .foregroundStyle(Theme.muted.opacity(0.7))
+                .font(.system(size: 13, weight: .bold, design: .default))
+                .tracking(1.6)
+                .foregroundStyle(selected ? palette.ink : palette.ink.opacity(0.78))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, lane == .ideas ? 78 : 16)
+                .padding(.trailing, 16)
+                .padding(.top, 36)
+                .padding(.bottom, 10)
+                .contentShape(Rectangle())
         }
-        .padding(.leading, lane == .ideas ? 78 : 16)
-        .padding(.trailing, 16)
-        .padding(.top, 36)
-        .padding(.bottom, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .buttonStyle(.plain)
+        .help("\(lane.shortcut) — next Return goes to \(lane.title)")
     }
 }

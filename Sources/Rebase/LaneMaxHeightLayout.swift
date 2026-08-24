@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Three parallel lanes. Height is the tallest lane. Shorter lanes keep blank paper.
 struct LaneMaxHeightLayout: Layout {
-    var fractions: [CGFloat] = [Theme.ideasFraction, Theme.lifeFraction, Theme.workFraction]
+    var fractions: [CGFloat] = [0.37, 0.37, 0.26]
     var hairline: CGFloat = 1
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {

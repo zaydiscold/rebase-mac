@@ -1,18 +1,64 @@
 import SwiftUI
 
 struct TimelineView: View {
+    @Bindable var state: AppState
+    @Environment(\.palette) private var palette
+
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(PrototypeData.days) { day in
-                    DaySectionView(day: day)
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Color.clear
+                        .frame(height: 1)
+                        .id("top")
+                    ForEach(state.monthSections) { section in
+                        MonthHeaderView(
+                            section: section,
+                            expanded: state.isMonthExpanded(section.id),
+                            onToggle: { state.toggleMonth(section.id) }
+                        )
+                        .id("month-\(section.id)")
+                        if state.isMonthExpanded(section.id) {
+                            ForEach(section.days) { day in
+                                DaySectionView(
+                                    day: day,
+                                    onToggle: { dayId, lane, entryId in
+                                        state.toggleDone(dayId: dayId, lane: lane, entryId: entryId)
+                                    },
+                                    onStar: { dayId, lane, entryId in
+                                        state.toggleImportant(dayId: dayId, lane: lane, entryId: entryId)
+                                    }
+                                )
+                                .id(day.id)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .animation(Theme.motion, value: captureFingerprint)
+            }
+            .background(palette.paper)
+            .onPreferenceChange(DayFrameKey.self) { frames in
+                state.dayFrames = frames
+            }
+            .onScrollGeometryChange(for: CGRect.self) { geometry in
+                geometry.visibleRect
+            } action: { _, newValue in
+                state.visibleRect = newValue
+            }
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    proxy.scrollTo("top", anchor: .top)
                 }
             }
-            .padding(.top, 8)
-            .padding(.bottom, 24)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .onChange(of: captureFingerprint) {
+                proxy.scrollTo("top", anchor: .top)
+            }
         }
-        .defaultScrollAnchor(.top)
-        .background(Theme.paper)
+    }
+
+    private var captureFingerprint: String {
+        let today = state.days.first
+        return "\(today?.ideas.count ?? 0)-\(today?.life.count ?? 0)-\(today?.work.count ?? 0)"
     }
 }

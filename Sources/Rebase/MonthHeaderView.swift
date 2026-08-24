@@ -1,0 +1,45 @@
+import SwiftUI
+
+struct MonthSection: Identifiable {
+    let id: String
+    let title: String
+    let days: [PrototypeDay]
+    let startsCollapsed: Bool
+}
+
+struct MonthHeaderView: View {
+    let section: MonthSection
+    let expanded: Bool
+    var onToggle: () -> Void
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 8) {
+                Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(palette.muted)
+                    .frame(width: 12)
+                Text(section.title.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.4)
+                    .foregroundStyle(palette.ink)
+                Rectangle()
+                    .fill(palette.dateRule)
+                    .frame(height: 1)
+                if !expanded {
+                    Text("\(section.days.count)")
+                        .font(Theme.stampFont)
+                        .monospacedDigit()
+                        .foregroundStyle(palette.muted)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(palette.paper)
+        .help(expanded ? "Collapse \(section.title)" : "Expand \(section.title)")
+    }
+}

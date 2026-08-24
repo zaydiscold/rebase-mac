@@ -3,21 +3,22 @@ import SwiftUI
 struct DateDividerView: View {
     let day: PrototypeDay
     @State private var hovering = false
+    @Environment(\.palette) private var palette
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Text(hovering ? day.fullDate : day.stamp)
                 .font(Theme.stampFont)
                 .monospacedDigit()
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(palette.muted)
                 .padding(.leading, 16)
-                .animation(.easeOut(duration: 0.12), value: hovering)
             Rectangle()
-                .fill(Theme.hairline)
+                .fill(palette.dateRule)
                 .frame(height: 1)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
+        .padding(.top, 2)
+        .padding(.bottom, 2)
         .onHover { hovering = $0 }
         .help(day.fullDate)
     }
