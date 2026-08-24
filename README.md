@@ -6,6 +6,9 @@ Rebase is a local Mac to-do list with three lanes: Ideas, Life, and Work. All
 three live on one timeline, so a date line stays aligned across the whole
 window. Nothing needs an account, server, or subscription.
 
+See the [public product and engineering plan](docs/REBASE_MASTER_PLAN.md) for the
+stable interaction contract, current implementation, and issue-driven roadmap.
+
 ## Run it
 
 Rebase requires macOS 15 or later.
@@ -74,6 +77,25 @@ regenerates this sidecar whenever durable data changes, so manual edits can be
 overwritten. Use the explicit Import action when a Markdown edit should replace
 app data.
 
+## Import semantics
+
+Normal Rebase Markdown uses conventional checkbox meaning:
+
+```text
+- [ ] active normal entry
+- [ ] * active important entry
+- [x] resolved normal entry
+- [x] * resolved important entry
+```
+
+The importer is strict and reports a source line for invalid dates, missing or
+unknown lane headings, malformed checkboxes, and unrecognized nonempty content.
+It fails before changing app state.
+
+A legacy Apple Notes list may use `[x]` as an importance marker instead of
+completion. Do not import that source through the normal Markdown action. A
+lossless dedicated legacy mode is tracked in issue #5.
+
 ## Data and privacy
 
 This repository is public. Never copy a real Rebase store, work notes, backups,
@@ -84,15 +106,23 @@ not in Git.
 Personal and employer data should use separate stores. Rebase has no network or
 AI dependency for ordinary capture and retrieval.
 
+The current public tree no longer embeds the original private planning
+transcript. Removing an already published blob from historical Git objects is a
+separate repository-history operation tracked in issue #12.
+
 ## Verification
 
-Pull requests run the Swift regression suite and a release build on macOS. Run
-the same checks locally with:
+Pull requests run the Swift regression suite, a release build, and a package job
+that validates the real universal app bundle:
 
 ```bash
 swift test --parallel
 swift build -c release
+SIGNING_MODE=adhoc ARCHES="arm64 x86_64" ./Scripts/package_app.sh release
 ```
+
+CI requires both `arm64` and `x86_64`, strict code-signature verification, and
+bundle metadata that matches `version.env`.
 
 No tags, folders, streaks, projects, analytics, AI dependency, or automatic
 midnight carry-forward.
