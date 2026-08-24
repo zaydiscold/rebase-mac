@@ -5,33 +5,51 @@ struct CaptureBarView: View {
     @Binding var draft: String
     var onSubmit: () -> Void
     @Environment(\.palette) private var palette
+    @Environment(\.accent) private var accent
+    @Environment(\.bodySize) private var bodySize
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            HStack(spacing: 4) {
+        HStack(alignment: .center, spacing: 10) {
+            SettingsLink {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(palette.muted.opacity(0.55))
+                    .frame(width: 18, height: 18)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Settings  ⌘,")
+
+            HStack(spacing: 2) {
                 ForEach(Lane.allCases) { lane in
                     laneButton(lane)
                 }
             }
 
-            CaptureField(text: $draft, onSubmit: onSubmit, ink: palette.ink, muted: palette.muted)
-                .frame(minHeight: 22)
+            CaptureField(
+                text: $draft,
+                onSubmit: onSubmit,
+                ink: palette.ink,
+                muted: palette.muted,
+                bodySize: bodySize
+            )
+            .frame(minHeight: 20)
 
             Button(action: onSubmit) {
                 Image(systemName: "arrow.uturn.up")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(palette.ink)
-                    .frame(width: 28, height: 22)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(palette.muted)
+                    .frame(width: 22, height: 20)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .help("Add to \(selectedLane.title)")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(palette.paper2)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 7)
+        .background(palette.paper)
         .overlay(alignment: .top) {
-            Rectangle().fill(Theme.orange.opacity(0.45)).frame(height: 1)
+            Rectangle().fill(accent.color.opacity(0.34)).frame(height: 1)
         }
     }
 
@@ -40,24 +58,17 @@ struct CaptureBarView: View {
         return Button {
             selectedLane = lane
         } label: {
-            HStack(spacing: 6) {
-                Text(lane.title)
-                    .font(Theme.chromeFont)
-                Text(lane.shortcut)
-                    .font(Theme.stampFont)
-                    .opacity(selected ? 0.9 : 0.55)
-            }
-            .foregroundStyle(selected ? palette.paper : palette.ink)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(selected ? Theme.orange : Color.clear)
-            .overlay {
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .stroke(selected ? Color.clear : Theme.purple.opacity(0.55), lineWidth: 1)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            Text(lane.title.uppercased())
+                .font(.system(size: 9, weight: .semibold))
+                .tracking(0.7)
+                .foregroundStyle(selected ? accent.color : palette.muted)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 3)
+                .background(selected ? accent.color.opacity(0.12) : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("\(lane.shortcut) writes the next Return into \(lane.title)")
+        .help("\(lane.shortcut) selects \(lane.title)")
     }
 }

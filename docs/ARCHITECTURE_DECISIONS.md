@@ -1,23 +1,46 @@
 # Architecture decisions
 
-## ADR-001: Shared day-row timeline
+These decisions describe the app that exists now and the storage change planned
+for later.
 
-Three independently scrolling columns would drift. One parent scroll of day-sized rows makes the date rule the same y-coordinate in every lane. Row height is the max of the three lanes. Blank space in a short lane is intentional.
+## ADR-001: Use one shared day-row timeline
 
-## ADR-002: SQLite through GRDB, not Markdown files
+Three independently scrolling columns would drift. Rebase uses one parent scroll
+of day-sized rows, which keeps every date rule at the same vertical position.
+The tallest lane determines the row height. Blank space in a shorter lane is
+intentional.
 
-Apple Notes lags because one document holds everything. Each thought is a database row. Markdown and JSONL are export and backup formats.
+## ADR-002: Keep the current build local and file-backed
 
-Deferred to Phase 1. Phase 0 is a static prototype.
+The working app stores atomic entries in `~/Documents/Rebase/days.json` and
+writes a Markdown copy to `rebase.md`. Settings live beside them in
+`settings.json`.
 
-## ADR-003: SwiftUI + custom Layout, not NavigationSplitView
+SQLite through GRDB remains the planned persistence layer once the daily
+interaction is settled. Markdown stays an import, export, and backup format.
+The app must migrate existing files without deleting or duplicating entries.
 
-The three lanes are parallel streams, not a selection hierarchy.
+## ADR-003: Use SwiftUI with a custom layout
 
-## ADR-004: Native SwiftPM Mac app
+The lanes are parallel streams, not a selection hierarchy. Rebase uses a custom
+layout instead of `NavigationSplitView` so Ideas, Life, and Work remain aligned
+inside one timeline.
 
-No Electron. No Tuist. Scripted `.app` packaging. Bundle id `com.zayd.rebase`. Local git only.
+## ADR-004: Ship a native SwiftPM Mac app
 
-## ADR-005: Dark-first Typora Night tokens
+Rebase is Swift and AppKit/SwiftUI. It has no Electron runtime or account system.
+The scripts build and package `Rebase.app` with bundle identifier
+`com.zayd.rebase`.
 
-Zayd's Typora is Night. Phase 0 ships those colors so the first window does not look like a generic productivity app.
+## ADR-005: Give every lane the same task behavior
+
+Ideas, Life, and Work all use checkboxes. The lane answers where a task belongs;
+it does not change whether the entry can be completed. This keeps Rebase a
+to-do list instead of turning Ideas into a permanent pile of non-actionable
+bullets.
+
+## ADR-006: Use one accent as structure
+
+The chosen accent marks the active lane, bottom lane switcher, settings controls,
+and timeline rules. Open tasks use a fixed bright red asterisk. Completed tasks
+use slate. Light mode uses the zayd.wtf parchment token `#F1E9D2`.

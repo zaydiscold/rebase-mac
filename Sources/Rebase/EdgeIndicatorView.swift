@@ -11,11 +11,8 @@ struct EdgeIndicatorView: View {
             chip(lane: .life, count: below[.life] ?? 0, noun: "open")
             chip(lane: .work, count: below[.work] ?? 0, noun: "open")
         }
-        .padding(.vertical, 6)
-        .background(palette.paper.opacity(0.96))
-        .overlay(alignment: .top) {
-            Rectangle().fill(Theme.purple.opacity(0.4)).frame(height: 1)
-        }
+        .padding(.vertical, 4)
+        .background(palette.paper)
     }
 
     private func chip(lane: Lane, count: Int, noun: String) -> some View {

@@ -8,6 +8,14 @@
 **Product status:** Plan first, then one narrow vertical slice  
 **Working line:** **Capture everything. Face only today.**
 
+
+## Current implementation status
+
+The working Mac app uses SwiftUI and AppKit, one shared timeline, three
+checkbox lanes, a compact bottom lane switcher, local JSON persistence, and a
+Markdown sidecar. SQLite, search, Rebase review, and JSONL import remain later
+work.
+
 ---
 
 ## 1. The decision
@@ -56,7 +64,7 @@ No title, folder, project, tag, priority, deadline, estimate, icon, color, or da
 
 ### 3.2 Entries are atomic
 
-Each thought or task is stored as its own database row, not as one enormous rich-text document. This allows fast rendering, independent editing, reliable search, movement between lanes, history, and safe import/export.
+Each thought or task is stored as an independent record, not as one enormous rich-text document. The current build stores those records in `days.json`; the planned SQLite migration keeps the same atomic model.
 
 ### 3.3 Chronology is the native organization
 
@@ -96,18 +104,18 @@ Work gets enough room to function, but it does not visually take over the applic
 ┌──────────────────────────────────── REBASE ────────────────────────────────────┐
 │        IDEAS  37%        │          LIFE  37%         │       WORK  26%        │
 │                          │                            │                         │
-│  A protein design tool   │  □ Submit gym claim       │  □ Prep meeting notes   │
-│  that tells a mutation   │  □ Call dentist           │  □ Review AI rollout    │
-│  as a biological story   │                            │                         │
+│  □ A protein design tool │  □ Submit gym claim       │  □ Prep meeting notes   │
+│  □ Another idea          │  □ Call dentist           │  □ Review AI rollout    │
+│                          │                            │                         │
 │                          │                            │                         │
 ├─ 8 · 23 · 26 ──────────────────────────────────────────────────────────────────┤
-│  Older ideas...          │  □ Older life task        │  □ Older work task      │
+│  □ Older idea            │  □ Older life task        │  □ Older work task      │
 │                          │                            │                         │
 ├─ 8 · 22 · 26 ──────────────────────────────────────────────────────────────────┤
 │                          │                            │                         │
-│  ▼ 184 older ideas       │  ▼ 26 open life tasks     │  ▼ 41 open work tasks   │
+│  ▼ 18 open ideas         │  ▼ 26 open life tasks     │  ▼ 41 open work tasks   │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│ [ Ideas ] [ Life ] [ Work ]  Write anything...                         Return ↵ │
+│  Ideas  Life  Work       Write anything...                              Return ↵ │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -191,42 +199,38 @@ After the main app is stable, add a global quick-capture window with a system-wi
 
 ## 6. Entry behavior
 
-### 6.1 Ideas
+### 6.1 Shared task model
 
-An Idea entry has no checkbox. It can be:
+Ideas, Life, and Work all use a quiet checkbox. Every entry can be open or
+completed in the current build. Closed, archived, and recoverable-deleted states
+remain planned.
 
-- Active
-- Archived
-- Soft-deleted
+The lane answers where an entry belongs. It does not decide whether the entry
+can be finished.
 
-An idea can contain a business concept, project thought, technical idea, maxim, identity statement, observation, or long-range plan. The application should not force ideas to pretend they are tasks.
+### 6.2 Lane meaning
 
-### 6.2 Life and Work
+Ideas can hold a business concept, project thought, technical idea, observation,
+or long-range plan. A checkbox does not make every idea urgent. It gives the
+user one consistent way to clear anything that no longer needs attention.
 
-Life and Work entries are tasks by default. Each has a quiet checkbox and can be:
-
-- Open
-- Completed
-- Closed without completion
-- Soft-deleted
-
-"Closed" is important. Some old intentions are no longer relevant, but marking them complete would be dishonest. Closing means the item is no longer active while preserving what was written.
+Life holds personal obligations. Work holds employment and professional tasks.
+All three lanes share the same visible completion behavior.
 
 ### 6.3 Inline editing
 
-- Single click selects.
-- Double click or Return begins editing.
-- `Command-Return` saves an edit.
-- `Escape` cancels an edit.
-- Completed tasks remain visible with restrained styling until the day changes.
-- Hover reveals exact capture time and, when applicable, the original date before rebasing.
+- A checkbox click toggles completion.
+- Double-clicking task text toggles completion without making a single click destructive.
+- Completed tasks use a thin strike, one line, and a slate asterisk.
+- Open tasks keep a bright red asterisk.
+- Inline text editing remains later work.
 
 ### 6.4 Moving and reordering
 
 - Drag within a lane to reorder entries on the same day.
 - Drag across lanes to correct categorization.
 - Reordering changes only presentation order, not timestamps.
-- Moving between Ideas and a task lane changes the available state model. Moving an Idea to Life or Work makes it an open task. Moving a task to Ideas removes the checkbox but preserves completion history in the event log.
+- Moving across lanes changes categorization without changing completion state.
 
 ### 6.5 Markdown
 
@@ -261,7 +265,7 @@ Each lane may show a sticky top or bottom indicator inspired by off-screen game 
 
 - `▲ 4` means four relevant items exist above the viewport.
 - `▼ 26 open` means twenty-six unresolved tasks exist below the viewport.
-- Ideas count entries, while Life and Work prioritize open tasks.
+- Ideas, Life, and Work all count unresolved tasks.
 - Clicking an indicator jumps to the nearest relevant item.
 - The indicators should be subtle, not flashing red warnings.
 
@@ -324,41 +328,31 @@ Soft-deleted entries go to a recoverable Trash view. Automatic permanent deletio
 
 ## 9. Legacy-note migration
 
-The existing giant note should not be manually reorganized inside the app line by line. That would reproduce the exact burden Rebase is supposed to remove.
+The first real migration is conversational, not a batch classification report.
+Before replacing the bundled sample entries, preserve a copy of `days.json`.
 
-### 9.1 Import safety
-
-Every import creates:
-
-1. An untouched copy of the source text
-2. A parsed set of proposed entries
-3. A line-to-entry mapping so no source line silently disappears
-
-### 9.2 Smart import workflow
-
-The companion GPT chat is the right place for the first migration because the source contains mixed tasks, ideas, mantras, fragments, duplicates, and compound lines.
+### 9.1 Placement workflow
 
 The workflow is:
 
-1. Zayd pastes a section, explicitly noting that it is in bottom-up order.
-2. The assistant numbers every source line.
-3. The assistant classifies each line as Ideas, Life, Work, non-entry context, or ambiguous.
-4. Compound lines are split only when they clearly contain separate thoughts.
-5. The assistant preserves the original wording alongside any cleaned wording.
-6. The assistant identifies duplicates without deleting them automatically.
-7. The assistant proposes at most three Life and three Work items for immediate focus.
-8. The assistant emits a JSONL import block.
-9. Rebase imports the JSONL only after the mapping is reviewable.
+1. Zayd pastes the to-do list in chat.
+2. The assistant preserves every line in the pasted order.
+3. For one entry at a time, the assistant asks:
+   `Where does this go? 1 Ideas, 2 Life, or 3 Work?`
+4. Zayd answers `1`, `2`, or `3`.
+5. The confirmed entry is placed on the newest day in that lane.
+6. The assistant moves to the next entry.
+7. The final source-line and placed-entry counts must reconcile.
 
-### 9.3 Import format
+The assistant does not rewrite, split, merge, close, or prioritize entries
+unless Zayd asks. Obvious duplicates can be flagged in one sentence, but Zayd
+decides what stays.
 
-Each JSONL line should resemble:
+### 9.2 Import safety
 
-```json
-{"id":"generated-uuid","text":"Submit last month's Movement reimbursement","original_text":"get movement comp from work","lane":"life","status":"open","origin_day":"2026-08-23","active_day":"2026-08-23","captured_at":"2026-08-23T18:30:00-07:00","source":"legacy-notes","source_line":142,"source_order":"bottom_up"}
-```
-
-Unknown dates should remain explicitly unknown rather than being invented. The import date can be stored separately from the inferred original date.
+The current JSON file remains recoverable until the replacement list has been
+checked in the real app. Future JSONL import can automate the same placement
+workflow, but it is not required for the first real list.
 
 ---
 
@@ -372,14 +366,14 @@ Rebase should reproduce that principle through clean-room implementation based o
 
 ### 10.2 Visual direction
 
-- Warm paper-like background rather than stark productivity-dashboard white
+- Warm `#F1E9D2` parchment in light mode and quiet slate in dark mode
 - Very low interface chrome
-- Fine vertical separators between lanes
-- A full-width horizontal date rule after each day
-- Serif or humanist reading face for entry text
+- Accent-colored vertical separators between lanes
+- Accent-colored horizontal date rules after each day
+- Serif reading face for entry text
 - System sans serif for controls
 - Monospaced numerals for dates and counters
-- Restrained lane accents that remain legible in light and dark mode
+- One selected accent used consistently in light and dark mode
 - No rounded card explosion
 - No colorful priority matrix
 - No motivational quotes generated by the app
@@ -409,9 +403,13 @@ Use AppKit's `NSTextView` through `NSViewRepresentable` where the editor needs t
 
 ### 11.2 Persistence decision
 
-Use **SQLite through GRDB** as the source of truth.
+The working build uses `~/Documents/Rebase/days.json` as its source of truth and
+writes `rebase.md` beside it. This is simple, local, inspectable, and good enough
+to validate daily use.
 
-Do not make Markdown files the primary database. A file-per-entry design would create thousands of tiny files, awkward ordering, and more complicated transactional updates. Human-readable Markdown and JSONL remain first-class export and backup formats.
+SQLite through GRDB remains the target persistence layer. The migration must
+preserve every existing record and keep Markdown as an import, export, and
+backup format.
 
 ### 11.3 Local-first boundary
 
@@ -517,24 +515,22 @@ Add SQLite FTS5 after basic CRUD is stable.
 
 ### 11.6 Data location
 
-Primary database:
+Current files:
+
+```text
+~/Documents/Rebase/days.json
+~/Documents/Rebase/rebase.md
+~/Documents/Rebase/settings.json
+```
+
+The planned SQLite migration may move the source of truth to:
 
 ```text
 ~/Library/Application Support/Rebase/rebase.sqlite
 ```
 
-Daily human-readable snapshots:
-
-```text
-~/Documents/Rebase Backups/YYYY-MM-DD/
-```
-
-Each snapshot should contain:
-
-- A SQLite backup
-- JSONL export
-- Markdown export
-- Import source copies not already included in a previous snapshot
+That migration must leave human-readable backups in Documents and must never
+wipe the existing JSON file before verification.
 
 ### 11.7 Markdown rendering
 
@@ -658,7 +654,7 @@ The application should be tested against the behavior that broke the current wor
 - Resize the window until columns become narrow
 - Import text in bottom-up order
 - Export and re-import without losing IDs, source lines, dates, or status
-- Corrupt a backup copy and confirm the primary database remains intact
+- Corrupt a backup copy and confirm the primary data remains intact
 - Restore a soft-deleted entry
 
 ### 13.3 Privacy tests
@@ -718,11 +714,11 @@ Any existing reverse-engineering notes can be converted into behavioral observat
 
 ### Product and repository
 
-- [ ] Create repository named `rebase-mac`
-- [ ] Add this plan under `docs/REBASE_MASTER_PLAN.md`
-- [ ] Add `docs/ARCHITECTURE_DECISIONS.md`
-- [ ] Add the GPT project instructions file
-- [ ] Record the non-feature list in the README
+- [x] Create repository named `rebase-mac`
+- [x] Add this plan under `docs/REBASE_MASTER_PLAN.md`
+- [x] Add `docs/ARCHITECTURE_DECISIONS.md`
+- [x] Add the GPT project instructions file
+- [x] Record the non-feature list in the README
 
 ### Data layer
 
@@ -731,26 +727,28 @@ Any existing reverse-engineering notes can be converted into behavioral observat
 - [ ] Add migration version 1
 - [ ] Add entry create, update, soft-delete, and fetch queries
 - [ ] Add event logging
-- [ ] Add a deterministic seeded-data generator
+- [x] Add a deterministic seeded-data generator
 
 ### Timeline
 
-- [ ] Create one shared ScrollView and LazyVStack
-- [ ] Create DaySection with three parallel lanes
-- [ ] Implement maximum-height day-row behavior
-- [ ] Draw the full-width date divider below each row
-- [ ] Keep newest day at the top
-- [ ] Virtualize old day rows
+- [x] Create one shared ScrollView and LazyVStack
+- [x] Create DaySection with three parallel lanes
+- [x] Implement maximum-height day-row behavior
+- [x] Draw the full-width date divider below each row
+- [x] Keep newest day at the top
+- [x] Virtualize old day rows
 
 ### Capture and editing
 
-- [ ] Create fixed bottom capture bar
-- [ ] Add lane shortcuts Command-1, Command-2, and Command-3
-- [ ] Add Return to submit and Shift-Return for newline
+- [x] Create fixed bottom capture bar
+- [x] Add lane shortcuts Command-1, Command-2, and Command-3
+- [x] Add Return to submit
+- [ ] Add Shift-Return for newline
 - [ ] Add local draft recovery
 - [ ] Add inline editing
-- [ ] Add task completion and closure
-- [ ] Add Idea archive
+- [x] Add task completion
+- [ ] Add closure
+- [ ] Add archive
 - [ ] Add undo
 
 ### Rebase review
@@ -766,7 +764,7 @@ Any existing reverse-engineering notes can be converted into behavioral observat
 
 - [ ] Preserve raw import source
 - [ ] Implement JSONL import and export
-- [ ] Implement Markdown export grouped by date and lane
+- [x] Implement Markdown export grouped by date and lane
 - [ ] Add import line mapping
 - [ ] Create transactional daily backups
 - [ ] Add Trash and recovery
@@ -784,22 +782,19 @@ Any existing reverse-engineering notes can be converted into behavioral observat
 
 ## 17. GPT chat mode
 
-Use a dedicated ChatGPT Project or persistent project chat as Rebase's planning and migration companion. It should contain:
+Use a dedicated project chat as Rebase's migration companion. It should contain
+this plan, the project instructions, current screenshots, architecture
+decisions, and the current build status.
 
-- This product plan
-- The separate project-instructions file
-- UI screenshots and prototype decisions
-- Architecture decisions
-- Imported-note classification sessions
-- Build status and unresolved bugs
+The chat should not become another unstructured task pile. When Zayd pastes a
+list, it works one entry at a time and asks:
 
-The GPT companion should not become another place where unstructured tasks accumulate. Its role is limited to:
+`Where does this go? 1 Ideas, 2 Life, or 3 Work?`
 
-1. Product reasoning
-2. Line-by-line legacy-note triage
-3. Import-file generation
-4. Code planning and review
-5. Recording decisions back into the repository
+After Zayd answers, the entry goes on the newest day in that lane. The companion
+preserves the pasted wording and reconciles counts at the end. Tables,
+normalization, deduplication, and import-file generation happen only when Zayd
+asks for them.
 
 For employer-related entries, redact confidential details unless company policy explicitly permits sharing them with an external AI service. Rebase itself remains local-first regardless of what is used during development.
 

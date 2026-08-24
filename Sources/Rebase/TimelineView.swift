@@ -12,16 +12,20 @@ struct TimelineView: View {
                         .frame(height: 1)
                         .id("top")
                     ForEach(state.monthSections) { section in
-                        MonthHeaderView(
-                            section: section,
-                            expanded: state.isMonthExpanded(section.id),
-                            onToggle: { state.toggleMonth(section.id) }
-                        )
-                        .id("month-\(section.id)")
-                        if state.isMonthExpanded(section.id) {
+                        if section.id != state.currentMonthKey {
+                            MonthHeaderView(
+                                section: section,
+                                expanded: state.isMonthExpanded(section.id),
+                                onToggle: { state.toggleMonth(section.id) }
+                            )
+                            .id("month-\(section.id)")
+                        }
+                        if section.id == state.currentMonthKey || state.isMonthExpanded(section.id) {
                             ForEach(section.days) { day in
                                 DaySectionView(
                                     day: day,
+                                    expanded: state.isDayExpanded(day.id),
+                                    onToggleDay: { state.toggleDay(day.id) },
                                     onToggle: { dayId, lane, entryId in
                                         state.toggleDone(dayId: dayId, lane: lane, entryId: entryId)
                                     },
@@ -37,6 +41,7 @@ struct TimelineView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .animation(Theme.motion, value: captureFingerprint)
             }
+            .scrollIndicators(.hidden)
             .background(palette.paper)
             .onPreferenceChange(DayFrameKey.self) { frames in
                 state.dayFrames = frames

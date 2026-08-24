@@ -1,33 +1,70 @@
 # Rebase visual system
 
-Dark-first, with a light parchment mode in Settings. zayd.wtf archive tokens, not Typora Night.
+Quiet paper, readable type, and one accent that helps the structure make sense.
 
-Source: `~/dev/zayd-wtf/public/assets/css/styles.css` and `_docs/DESIGN.md`.
+## Color
 
-## Surface
+The app uses the following base tokens:
 
-| Token | Value | Role |
+| Token | Light | Dark |
 |---|---|---|
-| `paper` | `#1F1D18` | Window. Darker than zayd.wtf `#2a2a2a`, warm undertone from parchment |
-| `paper2` | `#161410` | Capture bar |
-| `ink` | `#F1E9D2` | Entry text. This is zayd.wtf `--paper-base` / dark `--ink` |
-| `muted` | `#C9C1AB` | Dates, placeholders. zayd.wtf dark `--muted` |
-| `orange` | `#FF8040` | Ideas/Life rule, selected pill, capture-bar hairline. Light `--accent` |
-| `purple` | `#9B7DFF` | Life/Work rule, unselected pill outline. Dark `--accent` |
-| `dateRule` | parchment at 32% | Horizontal day lines |
+| paper | `#F1E9D2` | `#2C2E31` |
+| ink | `#222222` | `#D2D5D8` |
+| muted | `#666666` | `#8E9397` |
+| open task | `#E62929` | `#E62929` |
 
-Grain is a 512px tiled warm gaussian overlay at 16% with `softLight` blend. Fine analog variation. Not fiber, not cement, not a stain.
+Light mode shares its warm parchment with zayd.wtf. Dark mode stays slate rather
+than blue-black.
 
-## Type
+The selected accent can be:
 
-- Entry body: system serif, 16pt, line-height 1.5
-- Chrome / capture / lane labels: SF Pro
-- Dates and edge counters: SF Mono, tabular lining numerals
-- Date stamp: `8 · 23 · 26`
+| Name | Hex |
+|---|---|
+| Orange | `#FF8040` |
+| Violet | `#9B7DFF` |
+| Lilac | `#9878D0` |
+| Ice | `#98D8F8` |
 
-## Chrome
+The accent marks the selected lane, the compact bottom lane switcher, settings
+controls, and the horizontal and vertical timeline rules. Structural rules use
+about 30 to 34 percent opacity so the color is visible without taking over the
+page.
 
-- Typeset notebook lines, not rounded cards
-- Vertical rules: orange then purple
-- Horizontal date rules: quiet parchment
-- Lane widths: Ideas 37% / Life 37% / Work 26%
+## Entries
+
+Ideas, Life, and Work all use the same task treatment:
+
+- A quiet checkbox on the left.
+- Serif body text.
+- A bright red asterisk on the right while open.
+- A slate asterisk, thin strike, and one-line text after completion.
+
+A checkbox toggles immediately. Double-clicking the task text performs the same
+action while preventing accidental single-click completion.
+
+## Timeline
+
+The three lanes share one vertical scroll. Each day is one horizontal row, and
+the tallest lane determines the row height. Shorter lanes keep intentional blank
+space.
+
+Date dividers span the full window. Collapsed days only show occupancy pips for
+lanes with unfinished tasks. Empty and fully completed days show no pips.
+
+## Capture bar
+
+The bottom bar stays compact:
+
+1. Settings gear.
+2. Small Ideas, Life, and Work switcher.
+3. Borderless text field.
+4. Submit glyph.
+
+The lane headers and `Command-1` through `Command-3` provide the same selection
+controls.
+
+## Texture and motion
+
+The bundled paper grain uses `softLight` at 5 percent in light mode and 12
+percent in dark mode. Motion uses a short ease-out transition and respects
+reduced-motion settings.

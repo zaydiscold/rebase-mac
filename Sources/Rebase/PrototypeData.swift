@@ -1,27 +1,16 @@
 import Foundation
 
-struct PrototypeEntry: Identifiable, Hashable, Codable {
+struct PrototypeEntry: Identifiable, Codable {
     let id: String
     let body: String
-    let isTask: Bool
     var done: Bool
     var important: Bool
 
-    init(id: String, body: String, isTask: Bool, done: Bool = false, important: Bool = false) {
+    init(id: String, body: String, done: Bool = false, important: Bool = false) {
         self.id = id
         self.body = body
-        self.isTask = isTask
         self.done = done
         self.important = important
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(String.self, forKey: .id)
-        body = try container.decode(String.self, forKey: .body)
-        isTask = try container.decode(Bool.self, forKey: .isTask)
-        done = try container.decodeIfPresent(Bool.self, forKey: .done) ?? false
-        important = try container.decodeIfPresent(Bool.self, forKey: .important) ?? false
     }
 }
 
@@ -38,17 +27,13 @@ struct PrototypeDay: Identifiable, Codable {
     var stamp: String { "\(month) · \(day) · \(year % 100)" }
 
     var fullDate: String {
-        let parts = id.split(separator: "-")
-        guard parts.count == 3,
-              let y = Int(parts[0]), let m = Int(parts[1]), let d = Int(parts[2]) else {
-            return stamp
-        }
         var comps = DateComponents()
-        comps.year = y
-        comps.month = m
-        comps.day = d
+        comps.year = year
+        comps.month = month
+        comps.day = day
         comps.timeZone = TimeZone(identifier: "America/Los_Angeles")
-        let cal = Calendar(identifier: .gregorian)
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = comps.timeZone ?? .current
         guard let date = cal.date(from: comps) else { return stamp }
         return date.formatted(.dateTime.weekday(.wide).month(.wide).day().year().locale(Locale(identifier: "en_US")))
     }
@@ -69,25 +54,22 @@ struct PrototypeDay: Identifiable, Codable {
         }
     }
 
-    mutating func toggle(_ id: String, in lane: Lane) {
+    mutating func append(_ entry: PrototypeEntry, into lane: Lane) {
         switch lane {
-        case .ideas:
-            break
-        case .life:
-            if let i = life.firstIndex(where: { $0.id == id }) { life[i].done.toggle() }
-        case .work:
-            if let i = work.firstIndex(where: { $0.id == id }) { work[i].done.toggle() }
+        case .ideas: ideas.append(entry)
+        case .life: life.append(entry)
+        case .work: work.append(entry)
         }
     }
 
-    mutating func toggleImportant(_ id: String, in lane: Lane) {
+    mutating func map(_ id: String, in lane: Lane, _ update: (inout PrototypeEntry) -> Void) {
         switch lane {
         case .ideas:
-            if let i = ideas.firstIndex(where: { $0.id == id }) { ideas[i].important.toggle() }
+            if let i = ideas.firstIndex(where: { $0.id == id }) { update(&ideas[i]) }
         case .life:
-            if let i = life.firstIndex(where: { $0.id == id }) { life[i].important.toggle() }
+            if let i = life.firstIndex(where: { $0.id == id }) { update(&life[i]) }
         case .work:
-            if let i = work.firstIndex(where: { $0.id == id }) { work[i].important.toggle() }
+            if let i = work.firstIndex(where: { $0.id == id }) { update(&work[i]) }
         }
     }
 
@@ -101,6 +83,23 @@ struct PrototypeDay: Identifiable, Codable {
 
     var isEmpty: Bool { ideas.isEmpty && life.isEmpty && work.isEmpty }
 
+    static func parse(id: String) -> PrototypeDay? {
+        let parts = id.split(separator: "-")
+        guard parts.count == 3,
+              let y = Int(parts[0]), let m = Int(parts[1]), let d = Int(parts[2]) else {
+            return nil
+        }
+        var comps = DateComponents()
+        comps.year = y
+        comps.month = m
+        comps.day = d
+        comps.timeZone = TimeZone(identifier: "America/Los_Angeles")
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = comps.timeZone ?? .current
+        guard let date = cal.date(from: comps) else { return nil }
+        return empty(from: date, calendar: cal)
+    }
+
     static func empty(from date: Date, calendar: Calendar) -> PrototypeDay {
         let parts = calendar.dateComponents([.year, .month, .day, .weekday], from: date)
         let y = parts.year ?? 0
@@ -108,26 +107,18 @@ struct PrototypeDay: Identifiable, Codable {
         let d = parts.day ?? 0
         let weekdayNames = ["", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
         let weekday = weekdayNames[parts.weekday ?? 0]
-        let id = String(format: "%04d-%02d-%02d", y, m, d)
         return PrototypeDay(
-            id: id,
-            month: m,
-            day: d,
-            year: y,
-            weekday: weekday,
-            ideas: [],
-            life: [],
-            work: []
+            id: String(format: "%04d-%02d-%02d", y, m, d),
+            month: m, day: d, year: y, weekday: weekday,
+            ideas: [], life: [], work: []
         )
     }
 }
 
 enum PrototypeData {
-    private static let pacific: TimeZone = TimeZone(identifier: "America/Los_Angeles")!
-
     static var calendar: Calendar {
         var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = pacific
+        cal.timeZone = TimeZone(identifier: "America/Los_Angeles")!
         return cal
     }
 
@@ -147,9 +138,7 @@ enum PrototypeData {
 
     static let sampleDays: [PrototypeDay] = [
         PrototypeDay(
-            id: "2026-08-23",
-            month: 8, day: 23, year: 2026,
-            weekday: "Sunday",
+            id: "2026-08-23", month: 8, day: 23, year: 2026, weekday: "Sunday",
             ideas: [
                 e("A notepad that refuses to become a second job"),
                 e("Maxims belong in a lane that never grows a checkbox"),
@@ -160,67 +149,37 @@ enum PrototypeData {
                 e("Do not auto-carry unfinished tasks into tomorrow. That is how a list becomes an accusation"),
                 e("Rebase moves. It never copies."),
             ],
-            life: [
-                t("Submit last month's gym claim"),
-                t("Call dentist"),
-            ],
-            work: [
-                t("Prep meeting notes"),
-            ]
+            life: [t("Submit last month's gym claim"), t("Call dentist")],
+            work: [t("Prep meeting notes")]
         ),
         PrototypeDay(
-            id: "2026-08-22",
-            month: 8, day: 22, year: 2026,
-            weekday: "Saturday",
+            id: "2026-08-22", month: 8, day: 22, year: 2026, weekday: "Saturday",
             ideas: [
                 e("Crowd control is a date line, not a folder tree"),
                 e("Three lanes. Permanent. No fourth."),
             ],
-            life: [
-                t("Pay the electric bill"),
-                t("Text mom"),
-                t("Buy coffee beans"),
-                t("Schedule oil change"),
-            ],
-            work: [
-                t("Review the rollout notes"),
-                t("Send the Friday status"),
-            ]
+            life: [t("Pay the electric bill"), t("Text mom"), t("Buy coffee beans"), t("Schedule oil change")],
+            work: [t("Review the rollout notes"), t("Send the Friday status")]
         ),
         PrototypeDay(
-            id: "2026-08-21",
-            month: 8, day: 21, year: 2026,
-            weekday: "Friday",
-            ideas: [
-                e("A day overflowing with ideas and barely occupied by work should visibly look that way. The empty paper is the point, not a layout bug."),
-            ],
-            life: [
-                t("Pick up dry cleaning"),
-            ],
+            id: "2026-08-21", month: 8, day: 21, year: 2026, weekday: "Friday",
+            ideas: [e("A day overflowing with ideas and barely occupied by work should visibly look that way. The empty paper is the point, not a layout bug.")],
+            life: [t("Pick up dry cleaning")],
             work: []
         ),
         PrototypeDay(
-            id: "2026-08-20",
-            month: 8, day: 20, year: 2026,
-            weekday: "Thursday",
-            ideas: [
-                e("Keep the giant Notes dump out of the app until JSONL import exists"),
-            ],
-            life: [
-                t("Renew the license plate"),
-            ],
-            work: [
-                t("Read the design review thread"),
-                t("Close the leftover ticket from Tuesday"),
-            ]
+            id: "2026-08-20", month: 8, day: 20, year: 2026, weekday: "Thursday",
+            ideas: [e("Keep the giant Notes dump out of the app until JSONL import exists")],
+            life: [t("Renew the license plate")],
+            work: [t("Read the design review thread"), t("Close the leftover ticket from Tuesday")]
         ),
     ]
 
     private static func e(_ body: String) -> PrototypeEntry {
-        PrototypeEntry(id: UUID().uuidString, body: body, isTask: false)
+        PrototypeEntry(id: UUID().uuidString, body: body)
     }
 
     private static func t(_ body: String) -> PrototypeEntry {
-        PrototypeEntry(id: UUID().uuidString, body: body, isTask: true)
+        PrototypeEntry(id: UUID().uuidString, body: body)
     }
 }

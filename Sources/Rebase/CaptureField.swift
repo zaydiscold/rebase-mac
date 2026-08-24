@@ -6,6 +6,7 @@ struct CaptureField: NSViewRepresentable {
     var onSubmit: () -> Void
     var ink: Color
     var muted: Color
+    var bodySize: CGFloat
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text, onSubmit: onSubmit)
@@ -17,14 +18,12 @@ struct CaptureField: NSViewRepresentable {
         field.drawsBackground = false
         field.isBezeled = false
         field.focusRingType = .none
-        let base = NSFont.systemFont(ofSize: 16)
-        if let serif = base.fontDescriptor.withDesign(.serif) {
-            field.font = NSFont(descriptor: serif, size: 16)
-        } else {
-            field.font = base
-        }
+        applyFont(field)
         applyColors(field)
         field.lineBreakMode = .byTruncatingTail
+        field.cell?.wraps = false
+        field.cell?.isScrollable = true
+        field.usesSingleLineMode = true
         field.delegate = context.coordinator
         field.target = context.coordinator
         field.action = #selector(Coordinator.submit(_:))
@@ -39,12 +38,22 @@ struct CaptureField: NSViewRepresentable {
         if field.stringValue != text {
             field.stringValue = text
         }
+        applyFont(field)
         applyColors(field)
+    }
+
+    private func applyFont(_ field: NSTextField) {
+        let base = NSFont.systemFont(ofSize: bodySize)
+        if let serif = base.fontDescriptor.withDesign(.serif) {
+            field.font = NSFont(descriptor: serif, size: bodySize)
+        } else {
+            field.font = base
+        }
     }
 
     private func applyColors(_ field: NSTextField) {
         field.textColor = NSColor(ink)
-        let placeholderFont = field.font ?? NSFont.systemFont(ofSize: 16)
+        let placeholderFont = field.font ?? NSFont.systemFont(ofSize: bodySize)
         field.placeholderAttributedString = NSAttributedString(
             string: "Write anything…",
             attributes: [

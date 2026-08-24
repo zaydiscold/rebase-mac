@@ -9,6 +9,8 @@ struct DayFrameKey: PreferenceKey {
 
 struct DaySectionView: View {
     let day: PrototypeDay
+    var expanded: Bool
+    var onToggleDay: () -> Void
     var onToggle: ((String, Lane, String) -> Void)?
     var onStar: ((String, Lane, String) -> Void)?
     @Environment(\.palette) private var palette
@@ -16,17 +18,18 @@ struct DaySectionView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            LaneMaxHeightLayout(fractions: fractions) {
-                LaneColumnView(entries: day.ideas, lane: .ideas, dayId: day.id, onToggle: onToggle, onStar: onStar)
-                LaneColumnView(entries: day.life, lane: .life, dayId: day.id, onToggle: onToggle, onStar: onStar)
-                LaneColumnView(entries: day.work, lane: .work, dayId: day.id, onToggle: onToggle, onStar: onStar)
+            DateDividerView(day: day, collapsed: !expanded, onToggle: onToggleDay)
+            if expanded {
+                LaneMaxHeightLayout(fractions: fractions) {
+                    LaneColumnView(entries: day.ideas, lane: .ideas, dayId: day.id, onToggle: onToggle, onStar: onStar)
+                    LaneColumnView(entries: day.life, lane: .life, dayId: day.id, onToggle: onToggle, onStar: onStar)
+                    LaneColumnView(entries: day.work, lane: .work, dayId: day.id, onToggle: onToggle, onStar: onStar)
+                }
+                .overlay { LaneHairlines() }
+                .padding(.bottom, 6)
             }
-            DateDividerView(day: day)
         }
         .background(palette.paper)
-        .overlay(alignment: .top) {
-            LaneHairlines()
-        }
         .background {
             GeometryReader { proxy in
                 Color.clear.preference(

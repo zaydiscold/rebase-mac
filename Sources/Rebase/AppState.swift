@@ -9,6 +9,7 @@ final class AppState {
     var visibleRect: CGRect = .zero
     var dayFrames: [String: CGRect] = [:]
     var collapsedMonths: Set<String> = []
+    var collapsedDays: Set<String> = []
 
     init() {
         let calendar = PrototypeData.makeCalendar()
@@ -19,90 +20,76 @@ final class AppState {
             days = calendar
         }
         ensureToday()
-        collapsedMonths = Set(
-            monthSections.filter(\.startsCollapsed).map(\.id)
-        )
+        collapsedMonths = Set(monthSections.filter { Self.monthIsAutoCollapsed($0.id) }.map(\.id))
+        let today = PrototypeData.todayId()
+        collapsedDays = Set(days.filter { $0.isEmpty && $0.id != today }.map(\.id))
+    }
+
+    var currentMonthKey: String {
+        let cal = PrototypeData.calendar
+        let now = Date()
+        return String(format: "%04d-%02d", cal.component(.year, from: now), cal.component(.month, from: now))
     }
 
     var monthSections: [MonthSection] {
         var sections: [MonthSection] = []
-        var bucket: [PrototypeDay] = []
-        var currentKey: String?
-        var currentTitle: String?
-        func flush() {
-            guard let key = currentKey, let title = currentTitle, !bucket.isEmpty else { return }
-            let sample = bucket[0]
-            sections.append(
-                MonthSection(
-                    id: key,
-                    title: title,
-                    days: bucket,
-                    startsCollapsed: Self.monthIsAutoCollapsed(year: sample.year, month: sample.month)
-                )
-            )
-            bucket = []
-        }
         for day in days {
-            if currentKey != day.monthKey {
-                flush()
-                currentKey = day.monthKey
-                currentTitle = day.monthTitle
+            if sections.last?.id != day.monthKey {
+                sections.append(MonthSection(id: day.monthKey, title: day.monthTitle, days: [day]))
+            } else {
+                sections[sections.count - 1].days.append(day)
             }
-            bucket.append(day)
         }
-        flush()
         return sections
     }
 
-    func isMonthExpanded(_ id: String) -> Bool {
-        !collapsedMonths.contains(id)
-    }
+    func isMonthExpanded(_ id: String) -> Bool { !collapsedMonths.contains(id) }
+    func isDayExpanded(_ id: String) -> Bool { !collapsedDays.contains(id) }
+    func toggleMonth(_ id: String) { collapsedMonths.formSymmetricDifference([id]) }
+    func toggleDay(_ id: String) { collapsedDays.formSymmetricDifference([id]) }
 
-    func toggleMonth(_ id: String) {
-        if collapsedMonths.contains(id) {
-            collapsedMonths.remove(id)
-        } else {
-            collapsedMonths.insert(id)
-        }
-    }
-
-    private static func monthIsAutoCollapsed(year: Int, month: Int) -> Bool {
+    private static func monthIsAutoCollapsed(_ key: String) -> Bool {
+        let parts = key.split(separator: "-")
+        guard parts.count == 2, let year = Int(parts[0]), let month = Int(parts[1]) else { return false }
         let cal = PrototypeData.calendar
         let now = Date()
         let nowIndex = cal.component(.year, from: now) * 12 + cal.component(.month, from: now)
-        let thenIndex = year * 12 + month
-        return nowIndex - thenIndex >= 3
+        return nowIndex - (year * 12 + month) >= 3
     }
 
     func capture() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         ensureToday()
-        let entry = PrototypeEntry(
-            id: UUID().uuidString,
-            body: text,
-            isTask: selectedLane != .ideas
+        days[0].insert(
+            PrototypeEntry(id: UUID().uuidString, body: text),
+            into: selectedLane
         )
-        var today = days[0]
-        today.insert(entry, into: selectedLane)
-        days[0] = today
+        collapsedDays.remove(days[0].id)
         draft = ""
         save()
     }
 
     func toggleDone(dayId: String, lane: Lane, entryId: String) {
-        guard let index = days.firstIndex(where: { $0.id == dayId }) else { return }
-        var day = days[index]
-        day.toggle(entryId, in: lane)
-        days[index] = day
-        save()
+        mutate(dayId: dayId, lane: lane, entryId: entryId) { $0.done.toggle() }
     }
 
     func toggleImportant(dayId: String, lane: Lane, entryId: String) {
-        guard let index = days.firstIndex(where: { $0.id == dayId }) else { return }
-        var day = days[index]
-        day.toggleImportant(entryId, in: lane)
-        days[index] = day
+        mutate(dayId: dayId, lane: lane, entryId: entryId) { $0.important.toggle() }
+    }
+
+    func applyMarkdown(_ imported: [PrototypeDay]) {
+        for incoming in imported {
+            if let i = days.firstIndex(where: { $0.id == incoming.id }) {
+                days[i].ideas = incoming.ideas
+                days[i].life = incoming.life
+                days[i].work = incoming.work
+            } else {
+                days.append(incoming)
+            }
+        }
+        days.sort { $0.id > $1.id }
+        ensureToday()
         save()
     }
 
@@ -110,26 +97,16 @@ final class AppState {
         let today = PrototypeData.todayId()
         if days.first?.id == today { return }
         if let existing = days.firstIndex(where: { $0.id == today }) {
-            let day = days.remove(at: existing)
-            days.insert(day, at: 0)
+            days.insert(days.remove(at: existing), at: 0)
             return
         }
-        days.insert(
-            PrototypeDay.empty(from: Date(), calendar: PrototypeData.calendar),
-            at: 0
-        )
+        days.insert(PrototypeDay.empty(from: Date(), calendar: PrototypeData.calendar), at: 0)
     }
 
-    func counts(relativeTo visible: CGRect, below: Bool) -> [Lane: Int] {
-        var ideas = 0
-        var life = 0
-        var work = 0
+    func olderCounts(in visible: CGRect) -> [Lane: Int] {
+        var ideas = 0, life = 0, work = 0
         for day in days {
-            guard let frame = dayFrames[day.id] else { continue }
-            let isBelow = frame.minY > visible.maxY - 4
-            let isAbove = frame.maxY < visible.minY + 4
-            let matches = below ? isBelow : isAbove
-            guard matches else { continue }
+            guard let frame = dayFrames[day.id], frame.minY > visible.maxY - 4 else { continue }
             ideas += day.ideas.count
             life += day.life.filter { !$0.done }.count
             work += day.work.filter { !$0.done }.count
@@ -137,7 +114,11 @@ final class AppState {
         return [.ideas: ideas, .life: life, .work: work]
     }
 
-    private func save() {
-        NotesStore.saveDays(days)
+    private func mutate(dayId: String, lane: Lane, entryId: String, _ update: (inout PrototypeEntry) -> Void) {
+        guard let index = days.firstIndex(where: { $0.id == dayId }) else { return }
+        days[index].map(entryId, in: lane, update)
+        save()
     }
+
+    private func save() { NotesStore.saveDays(days) }
 }

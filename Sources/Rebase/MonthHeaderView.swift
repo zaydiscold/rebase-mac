@@ -3,8 +3,7 @@ import SwiftUI
 struct MonthSection: Identifiable {
     let id: String
     let title: String
-    let days: [PrototypeDay]
-    let startsCollapsed: Bool
+    var days: [PrototypeDay]
 }
 
 struct MonthHeaderView: View {
@@ -12,6 +11,7 @@ struct MonthHeaderView: View {
     let expanded: Bool
     var onToggle: () -> Void
     @Environment(\.palette) private var palette
+    @Environment(\.accent) private var accent
 
     var body: some View {
         Button(action: onToggle) {
@@ -24,9 +24,7 @@ struct MonthHeaderView: View {
                     .font(.system(size: 11, weight: .bold))
                     .tracking(1.4)
                     .foregroundStyle(palette.ink)
-                Rectangle()
-                    .fill(palette.dateRule)
-                    .frame(height: 1)
+                Rectangle().fill(accent.color.opacity(0.34)).frame(height: 1)
                 if !expanded {
                     Text("\(section.days.count)")
                         .font(Theme.stampFont)

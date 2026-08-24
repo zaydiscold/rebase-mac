@@ -1,59 +1,64 @@
-# rebase
+# Rebase
 
-Private native Mac notepad. One shared timeline. Three lanes: Ideas, Life, Work.
+> I made this for me because my notes app lags and I need to do organized brain
 
-**Capture everything. Face only today.**
+Rebase is a local Mac to-do list with three lanes: Ideas, Life, and Work. All
+three live on one timeline, so a date line stays aligned across the whole
+window. Nothing needs an account, server, or subscription.
 
-The name is the verb. Unfinished work does not auto-copy into tomorrow. At midnight a clean day appears. Older items stay where they were captured. Command-R (later) rebases one old task at a time onto today, or leaves it, or closes it. That move is the product. The git pun is accidental.
+## Run it
 
-This is a just-for-me app. Local only. No account, no server, no analytics, no AI in the capture path.
-
-## run
+Build, package, and open the app:
 
 ```bash
-cd ~/Desktop/Projects/rebase-mac
-./Scripts/compile_and_run.sh
+./Scripts/package_app.sh release
+./Scripts/launch.sh
 ```
 
-Cmd-comma opens settings. Cmd-1 / Cmd-2 / Cmd-3 pick Ideas / Life / Work. Return (or the up-arrow) adds. Ideas use a bullet. Life and Work use a checkbox. The red asterisk on any row marks it important for the day. Done tasks get a thin strikethrough and collapse to one line.
+Rebase requires macOS 15 or later.
 
-Days stack inside months. Current month plus the two previous months start open. Three months back and older start collapsed. No year grouping.
+## Use it
 
-## notes live outside the app
+Write in the field at the bottom, choose Ideas, Life, or Work, and press Return.
+The compact lane switcher stays out of the way, and the same lanes are available
+through `Command-1`, `Command-2`, and `Command-3`.
 
+Every entry is a task with a checkbox. Open tasks keep a bright red asterisk.
+Completed tasks use a quiet slate asterisk, a thin strike, and one line of text.
+Double-click the task text to change its completion state without making an
+accidental single click destructive.
+
+The newest day sits at the top. Click a date to collapse it. A collapsed day
+only shows lane pips for unfinished work. Empty and fully completed old days do
+not keep three meaningless dots on screen.
+
+## Make it yours
+
+Open Settings with `Command-,` or the gear beside the capture field. You can:
+
+- Choose light, dark, or system appearance.
+- Pick orange, violet, lilac, or ice as the accent.
+- Change the reading size.
+- Resize the Ideas, Life, and Work lanes.
+- Export or import Markdown.
+
+The accent appears on the active lane, the compact bottom switcher, and the
+horizontal and vertical timeline rules. Light mode uses the same `#F1E9D2`
+parchment as zayd.wtf.
+
+## Your files
+
+Rebase keeps its data in Documents:
+
+```text
+~/Documents/Rebase/days.json       source of truth
+~/Documents/Rebase/rebase.md       Markdown copy
+~/Documents/Rebase/settings.json   appearance and layout
 ```
-~/Documents/Rebase/days.json
-~/Documents/Rebase/settings.json
-```
 
-Rebuilding, pulling from GitHub, or deleting `Rebase.app` does not touch that folder. First launch migrates any older file from `~/Library/Application Support/Rebase/`.
+`rebase.md` keeps each day as a heading and each lane as a section. Every entry
+uses a Markdown checkbox. A leading `*` records the important flag. Import and
+export live in Settings.
 
-## surface
-
-zayd.wtf archive tokens, not Typora Night.
-
-| token | dark | light |
-|---|---|---|
-| paper | `#1F1D18` | `#F1E9D2` parchment |
-| ink | `#F1E9D2` | `#333333` |
-| orange | `#FF8040` | Ideas/Life rule, selected pill |
-| purple | `#9B7DFF` | Life/Work rule |
-
-Fine grain overlay. Not fiber, not cement.
-
-Motion follows the zayd.wtf anime.js bar: easeOutQuad, 220ms, opacity and offset only, gated on reduced-motion. Native SwiftUI, not a JS runtime.
-
-## layout
-
-One shared vertical scroll of day-sized rows, grouped by month. Row height is the max of the three lanes. Shorter lanes keep blank paper. A date rule (`8 · 23 · 26`) spans the window under the row. Newest day at the top. Default column shares 37 / 37 / 26, adjustable in settings.
-
-## docs
-
-- `docs/REBASE_MASTER_PLAN.md` product contract
-- `docs/REBASE_GPT_PROJECT_INSTRUCTIONS.md` Notes dump triage
-- `docs/DESIGN.md` tokens
-- `docs/ARCHITECTURE_DECISIONS.md`
-
-## not this
-
-Not Notion. Not a markdown editor. Not a kanban. No tags, folders, priorities, streaks, or midnight carry-forward in v1.
+No tags, folders, streaks, projects, analytics, AI dependency, or automatic
+midnight carry-forward.

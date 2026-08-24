@@ -63,6 +63,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>${MACOS_MIN_VERSION}</string>
     <key>LSUIElement</key><${LSUI_VALUE}/>
     <key>CFBundleIconFile</key><string>Icon</string>
+    <key>CFBundleGetInfoString</key><string>To-do list triage</string>
+    <key>NSHumanReadableCopyright</key><string>To-do list triage</string>
+    <key>NSQuitAlwaysKeepsWindows</key><false/>
     <key>BuildTimestamp</key><string>${BUILD_TIMESTAMP}</string>
     <key>GitCommit</key><string>${GIT_COMMIT}</string>
 </dict>

@@ -3,19 +3,18 @@ import SwiftUI
 struct LaneHeaderView: View {
     @Binding var selectedLane: Lane
     @Environment(\.palette) private var palette
+    @Environment(\.accent) private var accent
     @Environment(\.laneFractions) private var fractions
 
     var body: some View {
-        LaneMaxHeightLayout(fractions: fractions) {
-            header(.ideas)
-            header(.life)
-            header(.work)
-        }
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(palette.dateRule).frame(height: 1)
-        }
-        .overlay {
-            LaneHairlines()
+        VStack(spacing: 0) {
+            LaneMaxHeightLayout(fractions: fractions) {
+                header(.ideas)
+                header(.life)
+                header(.work)
+            }
+            .overlay { LaneHairlines() }
+            Rectangle().fill(accent.color.opacity(0.34)).frame(height: 1)
         }
         .background(palette.paper)
     }
@@ -25,18 +24,22 @@ struct LaneHeaderView: View {
         return Button {
             selectedLane = lane
         } label: {
-            Text(lane.title.uppercased())
-                .font(.system(size: 13, weight: .bold, design: .default))
-                .tracking(1.6)
-                .foregroundStyle(selected ? palette.ink : palette.ink.opacity(0.78))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, lane == .ideas ? 78 : 16)
-                .padding(.trailing, 16)
-                .padding(.top, 36)
-                .padding(.bottom, 10)
-                .contentShape(Rectangle())
+            VStack(alignment: .leading, spacing: 6) {
+                Text(lane.title.uppercased())
+                    .font(.system(size: 13, weight: .bold))
+                    .tracking(1.6)
+                    .foregroundStyle(selected ? accent.color : palette.ink.opacity(0.58))
+                Rectangle()
+                    .fill(selected ? accent.color : Color.clear)
+                    .frame(width: 20, height: 2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.top, 30)
+            .padding(.bottom, 8)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("\(lane.shortcut) — next Return goes to \(lane.title)")
+        .help("\(lane.shortcut). Next Return goes to \(lane.title)")
     }
 }
