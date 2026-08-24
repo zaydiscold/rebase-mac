@@ -17,5 +17,10 @@ let package = Package(
                 .process("Resources"),
             ]
         ),
+        .testTarget(
+            name: "RebaseTests",
+            dependencies: ["Rebase"],
+            path: "Tests/RebaseTests"
+        ),
     ]
 )
