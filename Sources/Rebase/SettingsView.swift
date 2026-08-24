@@ -9,6 +9,20 @@ struct SettingsView: View {
         Palette.make(settings.colorScheme ?? systemScheme)
     }
 
+    private var ideasShare: Binding<Double> {
+        Binding(
+            get: { settings.ideasShare },
+            set: { settings.setIdeas($0) }
+        )
+    }
+
+    private var lifeShare: Binding<Double> {
+        Binding(
+            get: { settings.lifeShare },
+            set: { settings.setLife($0) }
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
@@ -53,8 +67,8 @@ struct SettingsView: View {
 
             settingRow("COLUMNS") {
                 VStack(alignment: .leading, spacing: 8) {
-                    labeledSlider("Ideas", value: $settings.ideasShare)
-                    labeledSlider("Life", value: $settings.lifeShare)
+                    labeledSlider("Ideas", value: ideasShare)
+                    labeledSlider("Life", value: lifeShare)
                     HStack {
                         Text("Work")
                             .frame(width: 48, alignment: .leading)
