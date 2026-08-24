@@ -48,8 +48,20 @@ The three lanes share one vertical scroll. Each day is one horizontal row, and
 the tallest lane determines the row height. Shorter lanes keep intentional blank
 space.
 
-Date dividers span the full window. Collapsed days only show occupancy pips for
-lanes with unfinished tasks. Empty and fully completed days show no pips.
+Each date row is a disclosure handle above its content. Expanding the date keeps
+the clicked row in place and reveals the shared three-lane day below it like a
+quiet drawer. It never inserts content above the control the user clicked.
+
+Date state remains readable while collapsed:
+
+- Three lane pips and an open count indicate unresolved entries.
+- A checkmark indicates a nonempty day with no open entries.
+- A faint hollow pip indicates a completely empty day.
+- Expanded dates use a restrained accent wash and stronger rule.
+
+Empty dates start collapsed so the timeline begins directly beneath the fixed
+lane header instead of showing an anonymous blank region. Explicit day and month
+expansion choices persist across relaunches.
 
 ## Capture bar
 
@@ -64,8 +76,16 @@ The bottom bar stays compact:
 The lane headers and `Command-1` through `Command-3` provide the same selection
 controls.
 
+## Settings
+
+Updates occupy one compact row: installed version and commit, an automatic-check
+toggle, one status line, Check now, and a contextual View action. The checker may
+contact GitHub, but it never touches the Rebase data directory or replaces the
+app in place.
+
 ## Texture and motion
 
 The bundled paper grain uses `softLight` at 5 percent in light mode and 12
 percent in dark mode. Motion uses a short ease-out transition and respects
-reduced-motion settings.
+reduced-motion settings. Date content moves only downward from its disclosure
+row, so motion explains location instead of creating layout surprise.
