@@ -42,5 +42,5 @@ bullets.
 ## ADR-006: Use one accent as structure
 
 The chosen accent marks the active lane, bottom lane switcher, settings controls,
-and timeline rules. Open tasks use a fixed bright red asterisk. Completed tasks
-use slate. Light mode uses the zayd.wtf parchment token `#F1E9D2`.
+and timeline rules. Important tasks use a fixed bright red asterisk; normal
+tasks use slate. Light mode uses the zayd.wtf parchment token `#F1E9D2`.

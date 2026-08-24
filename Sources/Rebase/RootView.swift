@@ -24,6 +24,7 @@ struct RootView: View {
             CaptureBarView(
                 selectedLane: $state.selectedLane,
                 draft: $state.draft,
+                draftImportant: $state.draftImportant,
                 onSubmit: { state.capture() }
             )
         }

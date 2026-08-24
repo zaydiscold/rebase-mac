@@ -128,58 +128,11 @@ enum PrototypeData {
     }
 
     static func makeCalendar(back: Int = 120, now: Date = Date()) -> [PrototypeDay] {
-        let seeded = Dictionary(uniqueKeysWithValues: sampleDays.map { ($0.id, $0) })
-        return (0..<back).compactMap { offset in
-            guard let date = calendar.date(byAdding: .day, value: -offset, to: now) else { return nil }
-            let empty = PrototypeDay.empty(from: date, calendar: calendar)
-            return seeded[empty.id] ?? empty
+        (0..<back).compactMap { offset in
+            calendar.date(byAdding: .day, value: -offset, to: now).map {
+                PrototypeDay.empty(from: $0, calendar: calendar)
+            }
         }
     }
 
-    static let sampleDays: [PrototypeDay] = [
-        PrototypeDay(
-            id: "2026-08-23", month: 8, day: 23, year: 2026, weekday: "Sunday",
-            ideas: [
-                e("A notepad that refuses to become a second job"),
-                e("Maxims belong in a lane that never grows a checkbox"),
-                e("Blank space on a day is a success metric"),
-                e("The past can exist without sitting in today's working memory"),
-                e("Capture is two decisions: the words, then Ideas / Life / Work"),
-                e("A protein design tool that tells a mutation as a biological story"),
-                e("Do not auto-carry unfinished tasks into tomorrow. That is how a list becomes an accusation"),
-                e("Rebase moves. It never copies."),
-            ],
-            life: [t("Submit last month's gym claim"), t("Call dentist")],
-            work: [t("Prep meeting notes")]
-        ),
-        PrototypeDay(
-            id: "2026-08-22", month: 8, day: 22, year: 2026, weekday: "Saturday",
-            ideas: [
-                e("Crowd control is a date line, not a folder tree"),
-                e("Three lanes. Permanent. No fourth."),
-            ],
-            life: [t("Pay the electric bill"), t("Text mom"), t("Buy coffee beans"), t("Schedule oil change")],
-            work: [t("Review the rollout notes"), t("Send the Friday status")]
-        ),
-        PrototypeDay(
-            id: "2026-08-21", month: 8, day: 21, year: 2026, weekday: "Friday",
-            ideas: [e("A day overflowing with ideas and barely occupied by work should visibly look that way. The empty paper is the point, not a layout bug.")],
-            life: [t("Pick up dry cleaning")],
-            work: []
-        ),
-        PrototypeDay(
-            id: "2026-08-20", month: 8, day: 20, year: 2026, weekday: "Thursday",
-            ideas: [e("Keep the giant Notes dump out of the app until JSONL import exists")],
-            life: [t("Renew the license plate")],
-            work: [t("Read the design review thread"), t("Close the leftover ticket from Tuesday")]
-        ),
-    ]
-
-    private static func e(_ body: String) -> PrototypeEntry {
-        PrototypeEntry(id: UUID().uuidString, body: body)
-    }
-
-    private static func t(_ body: String) -> PrototypeEntry {
-        PrototypeEntry(id: UUID().uuidString, body: body)
-    }
 }

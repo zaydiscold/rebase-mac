@@ -35,13 +35,17 @@ struct EntryRowView: View {
         } label: {
             Image(systemName: "asterisk")
                 .font(.system(size: 9, weight: entry.important ? .black : .bold))
-                .foregroundStyle(entry.done ? palette.muted.opacity(0.6) : Theme.star)
+                .foregroundStyle(
+                    entry.important
+                        ? Theme.star
+                        : palette.muted.opacity(entry.done ? 0.35 : 0.45)
+                )
                 .frame(width: 12, height: 12, alignment: .center)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(entry.done ? "Completed" : "Mark important")
-        .accessibilityLabel(entry.done ? "Completed" : "Open task")
+        .help(entry.important ? "Remove importance" : "Mark important")
+        .accessibilityLabel(entry.important ? "Important task" : "Normal task")
     }
 
 

@@ -36,8 +36,8 @@ Ideas, Life, and Work all use the same task treatment:
 
 - A quiet checkbox on the left.
 - Serif body text.
-- A bright red asterisk on the right while open.
-- A slate asterisk, thin strike, and one-line text after completion.
+- A bright red asterisk on the right when marked important.
+- A quiet slate asterisk otherwise.
 
 A checkbox toggles immediately. Double-clicking the task text performs the same
 action while preventing accidental single-click completion.
@@ -57,8 +57,9 @@ The bottom bar stays compact:
 
 1. Settings gear.
 2. Small Ideas, Life, and Work switcher.
-3. Borderless text field.
-4. Submit glyph.
+3. Importance asterisk.
+4. Borderless text field.
+5. Submit glyph.
 
 The lane headers and `Command-1` through `Command-3` provide the same selection
 controls.

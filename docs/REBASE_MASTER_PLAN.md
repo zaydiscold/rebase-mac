@@ -166,8 +166,8 @@ The app should use the IANA time zone identifier `America/Los_Angeles`, which me
 One input bar remains fixed to the bottom of the window. It contains:
 
 - A three-way lane selector
+- An importance toggle
 - One text field
-- No other required fields
 
 Keyboard behavior:
 
@@ -221,8 +221,8 @@ All three lanes share the same visible completion behavior.
 
 - A checkbox click toggles completion.
 - Double-clicking task text toggles completion without making a single click destructive.
-- Completed tasks use a thin strike, one line, and a slate asterisk.
-- Open tasks keep a bright red asterisk.
+- Completed tasks use a thin strike and one line.
+- Important tasks use a bright red asterisk; normal tasks use slate.
 - Inline text editing remains later work.
 
 ### 6.4 Moving and reordering
@@ -329,7 +329,7 @@ Soft-deleted entries go to a recoverable Trash view. Automatic permanent deletio
 ## 9. Legacy-note migration
 
 The first real migration is conversational, not a batch classification report.
-Before replacing the bundled sample entries, preserve a copy of `days.json`.
+The app ships with an empty timeline and no bundled sample entries.
 
 ### 9.1 Placement workflow
 

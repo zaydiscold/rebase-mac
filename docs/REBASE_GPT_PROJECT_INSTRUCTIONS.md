@@ -51,9 +51,10 @@ writes a Markdown copy to `rebase.md`, and keeps settings in `settings.json`.
 SQLite through GRDB is planned later, after the interaction model survives real
 daily use.
 
-Ideas, Life, and Work all use checkboxes. Open entries keep a bright red
-asterisk. Completed entries use slate, a thin strike, and one line. A checkbox
-click toggles immediately; double-clicking task text also toggles completion.
+Ideas, Life, and Work all use checkboxes. Important entries use a bright red
+asterisk; normal entries use slate. Completed entries use a thin strike and one
+line. A checkbox click toggles immediately; double-clicking task text also
+toggles completion.
 
 The chosen accent colors the active lane, the bottom lane switcher, settings,
 and timeline rules. Light mode uses `#F1E9D2` parchment.

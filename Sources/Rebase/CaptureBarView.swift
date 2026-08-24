@@ -3,6 +3,7 @@ import SwiftUI
 struct CaptureBarView: View {
     @Binding var selectedLane: Lane
     @Binding var draft: String
+    @Binding var draftImportant: Bool
     var onSubmit: () -> Void
     @Environment(\.palette) private var palette
     @Environment(\.accent) private var accent
@@ -25,6 +26,19 @@ struct CaptureBarView: View {
                     laneButton(lane)
                 }
             }
+
+            Button {
+                draftImportant.toggle()
+            } label: {
+                Image(systemName: "asterisk")
+                    .font(.system(size: 10, weight: draftImportant ? .black : .bold))
+                    .foregroundStyle(draftImportant ? Theme.star : palette.muted.opacity(0.45))
+                    .frame(width: 18, height: 18)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(draftImportant ? "Add as normal" : "Mark important")
+            .accessibilityLabel(draftImportant ? "Important task" : "Normal task")
 
             CaptureField(
                 text: $draft,

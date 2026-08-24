@@ -19,14 +19,15 @@ Rebase requires macOS 15 or later.
 
 ## Use it
 
-Write in the field at the bottom, choose Ideas, Life, or Work, and press Return.
-The compact lane switcher stays out of the way, and the same lanes are available
-through `Command-1`, `Command-2`, and `Command-3`.
+Write in the field at the bottom, choose Ideas, Life, or Work, optionally toggle
+the asterisk for an important task, and press Return. The compact lane switcher
+stays out of the way, and the same lanes are available through `Command-1`,
+`Command-2`, and `Command-3`.
 
-Every entry is a task with a checkbox. Open tasks keep a bright red asterisk.
-Completed tasks use a quiet slate asterisk, a thin strike, and one line of text.
-Double-click the task text to change its completion state without making an
-accidental single click destructive.
+Every entry is a task with a checkbox. Important tasks use a bright red
+asterisk; normal tasks use a quiet slate asterisk. Completed tasks use a thin
+strike and one line of text. Double-click the task text to change its completion
+state without making an accidental single click destructive.
 
 The newest day sits at the top. Click a date to collapse it. A collapsed day
 only shows lane pips for unfinished work. Empty and fully completed old days do

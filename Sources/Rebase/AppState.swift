@@ -5,6 +5,7 @@ import SwiftUI
 final class AppState {
     var selectedLane: Lane = .ideas
     var draft: String = ""
+    var draftImportant = false
     var days: [PrototypeDay]
     var visibleRect: CGRect = .zero
     var dayFrames: [String: CGRect] = [:]
@@ -62,11 +63,16 @@ final class AppState {
         guard !text.isEmpty else { return }
         ensureToday()
         days[0].insert(
-            PrototypeEntry(id: UUID().uuidString, body: text),
+            PrototypeEntry(
+                id: UUID().uuidString,
+                body: text,
+                important: draftImportant
+            ),
             into: selectedLane
         )
         collapsedDays.remove(days[0].id)
         draft = ""
+        draftImportant = false
         save()
     }
 

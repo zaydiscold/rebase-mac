@@ -137,8 +137,7 @@ enum NotesStore {
     }
 
     static func saveDays(_ days: [PrototypeDay]) {
-        let seededIds = Set(PrototypeData.sampleDays.map(\.id))
-        let captured = days.filter { !$0.isEmpty || seededIds.contains($0.id) }
+        let captured = days.filter { !$0.isEmpty }
         if let data = try? JSONEncoder().encode(captured) {
             try? data.write(to: daysURL, options: .atomic)
         }
