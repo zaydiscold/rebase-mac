@@ -164,12 +164,26 @@ enum NotesStore {
         panel.allowedContentTypes = [.plainText]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        guard panel.runModal() == .OK, let url = panel.url,
-              let text = try? String(contentsOf: url, encoding: .utf8) else {
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+
+        do {
+            let text = try String(contentsOf: url, encoding: .utf8)
+            let parsed = try RebaseMarkdown.parse(text)
+            return parsed.isEmpty ? nil : parsed
+        } catch {
+            showImportError(error)
             return nil
         }
-        let parsed = RebaseMarkdown.parse(text)
-        return parsed.isEmpty ? nil : parsed
+    }
+
+    @MainActor
+    private static func showImportError(_ error: Error) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Could not import Rebase Markdown"
+        alert.informativeText = error.localizedDescription
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     private static func writeReadmeIfNeeded(in folder: URL) {
