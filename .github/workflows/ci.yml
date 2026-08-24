@@ -30,3 +30,34 @@ jobs:
 
       - name: Build release executable
         run: swift build -c release
+
+  universal-package:
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Package universal app
+        run: SIGNING_MODE=adhoc ARCHES="arm64 x86_64" ./Scripts/package_app.sh release
+
+      - name: Verify architecture slices
+        run: |
+          actual="$(lipo -archs Rebase.app/Contents/MacOS/Rebase)"
+          echo "Architectures: ${actual}"
+          [[ " ${actual} " == *" arm64 "* ]]
+          [[ " ${actual} " == *" x86_64 "* ]]
+          [[ "$(wc -w <<<"${actual}" | tr -d ' ')" == "2" ]]
+
+      - name: Verify code signature
+        run: codesign --verify --deep --strict --verbose=2 Rebase.app
+
+      - name: Verify bundle metadata
+        run: |
+          source version.env
+          plist="Rebase.app/Contents/Info.plist"
+          actual_bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${plist}")"
+          actual_minimum="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "${plist}")"
+          [[ "${actual_bundle_id}" == "${BUNDLE_ID}" ]]
+          [[ "${actual_minimum}" == "${MACOS_MIN_VERSION}" ]]
