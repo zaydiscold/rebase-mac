@@ -13,17 +13,33 @@ final class AppState {
     var collapsedDays: Set<String> = []
 
     init() {
-        let calendar = PrototypeData.makeCalendar()
+        let recentDays = PrototypeData.makeCalendar()
         if let saved = NotesStore.loadDays() {
-            let byId = Dictionary(uniqueKeysWithValues: saved.map { ($0.id, $0) })
-            days = calendar.map { byId[$0.id] ?? $0 }
+            days = Self.merge(savedDays: saved, recentDays: recentDays)
         } else {
-            days = calendar
+            days = recentDays
         }
         ensureToday()
         collapsedMonths = Set(monthSections.filter { Self.monthIsAutoCollapsed($0.id) }.map(\.id))
         let today = PrototypeData.todayId()
         collapsedDays = Set(days.filter { $0.isEmpty && $0.id != today }.map(\.id))
+    }
+
+    /// Combines the generated recent calendar with every durable saved day.
+    /// Saved content wins over an empty generated placeholder for the same ID.
+    /// Iterating into a dictionary also makes duplicate saved IDs deterministic
+    /// instead of trapping in `Dictionary(uniqueKeysWithValues:)`.
+    static func merge(savedDays: [PrototypeDay], recentDays: [PrototypeDay]) -> [PrototypeDay] {
+        var byId: [String: PrototypeDay] = [:]
+
+        for day in savedDays {
+            byId[day.id] = day
+        }
+        for day in recentDays where byId[day.id] == nil {
+            byId[day.id] = day
+        }
+
+        return byId.values.sorted { $0.id > $1.id }
     }
 
     var currentMonthKey: String {
