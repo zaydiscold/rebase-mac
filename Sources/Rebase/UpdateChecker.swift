@@ -252,9 +252,10 @@ final class UpdateChecker {
         status = .checking
 
         do {
-            async let release = GitHubUpdateService.fetchLatestRelease()
-            async let mainCommit = GitHubUpdateService.fetchMainCommit()
-            let decision = try await UpdateEvaluator.evaluate(
+            async let releaseRequest = GitHubUpdateService.fetchLatestRelease()
+            async let commitRequest = GitHubUpdateService.fetchMainCommit()
+            let (release, mainCommit) = try await (releaseRequest, commitRequest)
+            let decision = UpdateEvaluator.evaluate(
                 currentVersion: currentVersion,
                 currentCommit: currentCommit,
                 release: release,
