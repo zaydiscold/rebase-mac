@@ -1,0 +1,83 @@
+name: Prune merged branches
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: prune-merged-branches
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete unchanged branches from merged pull requests
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const defaultBranch = context.payload.repository?.default_branch ?? "main";
+            const pulls = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: "closed",
+              sort: "updated",
+              direction: "desc",
+              per_page: 100,
+            });
+
+            const seen = new Set();
+            let deleted = 0;
+            let skipped = 0;
+
+            for (const pull of pulls) {
+              if (!pull.merged_at || pull.head.repo?.full_name !== `${owner}/${repo}`) {
+                continue;
+              }
+
+              const branch = pull.head.ref;
+              if (!branch || branch === defaultBranch || seen.has(branch)) {
+                continue;
+              }
+              seen.add(branch);
+
+              try {
+                const current = await github.rest.git.getRef({
+                  owner,
+                  repo,
+                  ref: `heads/${branch}`,
+                });
+
+                if (current.data.object.sha !== pull.head.sha) {
+                  core.info(`Keeping ${branch}: it changed after PR #${pull.number} merged.`);
+                  skipped += 1;
+                  continue;
+                }
+
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `heads/${branch}`,
+                });
+                core.info(`Deleted ${branch} from merged PR #${pull.number}.`);
+                deleted += 1;
+              } catch (error) {
+                if (error.status === 404) {
+                  core.info(`Skipping ${branch}: branch already deleted.`);
+                  continue;
+                }
+                throw error;
+              }
+            }
+
+            await core.summary
+              .addHeading("Merged branch cleanup")
+              .addRaw(`Deleted: ${deleted}\n\nKept because they changed: ${skipped}`)
+              .write();
