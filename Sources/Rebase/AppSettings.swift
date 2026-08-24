@@ -42,11 +42,47 @@ final class AppSettings {
 
     init() {
         guard let loaded = Self.load() else { return }
+        let shares = Self.normalizedColumnShares(
+            ideas: loaded.ideasShare,
+            life: loaded.lifeShare
+        )
+
         appearance = loaded.appearance
         accent = loaded.accent ?? .violet
-        ideasShare = loaded.ideasShare
-        lifeShare = loaded.lifeShare
-        bodySize = loaded.bodySize ?? 16
+        ideasShare = shares.ideas
+        lifeShare = shares.life
+        bodySize = Self.normalizedBodySize(loaded.bodySize)
+
+        // Persist repaired values and fill optional defaults from older settings files.
+        save()
+    }
+
+    static func normalizedColumnShares(ideas: Double, life: Double) -> (ideas: Double, life: Double) {
+        let safeIdeas = ideas.isFinite ? ideas : 0.37
+        let safeLife = life.isFinite ? life : 0.37
+        var normalizedIdeas = min(1 - minLane - minWork, max(minLane, safeIdeas))
+        var normalizedLife = min(1 - minLane - minWork, max(minLane, safeLife))
+        let available = 1 - minWork
+
+        if normalizedIdeas + normalizedLife > available {
+            let ideasFlex = normalizedIdeas - minLane
+            let lifeFlex = normalizedLife - minLane
+            let flexibleTotal = ideasFlex + lifeFlex
+            let flexibleAvailable = available - (2 * minLane)
+
+            if flexibleTotal > 0 {
+                let scale = flexibleAvailable / flexibleTotal
+                normalizedIdeas = minLane + (ideasFlex * scale)
+                normalizedLife = minLane + (lifeFlex * scale)
+            }
+        }
+
+        return (normalizedIdeas, normalizedLife)
+    }
+
+    static func normalizedBodySize(_ value: Double?) -> Double {
+        guard let value, value.isFinite else { return 16 }
+        return min(maxBody, max(minBody, value))
     }
 
     func resetColumns() {
@@ -75,7 +111,8 @@ final class AppSettings {
     }
 
     private func clamp(_ value: Double) -> Double {
-        min(1 - Self.minLane - Self.minWork, max(Self.minLane, value))
+        guard value.isFinite else { return 0.37 }
+        return min(1 - Self.minLane - Self.minWork, max(Self.minLane, value))
     }
 
     private static let minLane = 0.18
