@@ -6,10 +6,22 @@ final class UpdateCheckerTests: XCTestCase {
     private let commitURL = URL(string: "https://github.com/zaydiscold/rebase-mac/commit/abcdef1234567890")!
 
     func testSemanticVersionHandlesTagsAndMissingComponents() throws {
-        XCTAssertEqual(try XCTUnwrap(SemanticVersion("v1.2.3")), SemanticVersion("1.2.3"))
-        XCTAssertEqual(try XCTUnwrap(SemanticVersion("1.2")), SemanticVersion("1.2.0"))
-        XCTAssertLessThan(try XCTUnwrap(SemanticVersion("0.9.9")), try XCTUnwrap(SemanticVersion("1.0.0")))
-        XCTAssertLessThan(try XCTUnwrap(SemanticVersion("1.2.3")), try XCTUnwrap(SemanticVersion("1.2.4")))
+        XCTAssertEqual(
+            try XCTUnwrap(SemanticVersion("v1.2.3")),
+            try XCTUnwrap(SemanticVersion("1.2.3"))
+        )
+        XCTAssertEqual(
+            try XCTUnwrap(SemanticVersion("1.2")),
+            try XCTUnwrap(SemanticVersion("1.2.0"))
+        )
+        XCTAssertLessThan(
+            try XCTUnwrap(SemanticVersion("0.9.9")),
+            try XCTUnwrap(SemanticVersion("1.0.0"))
+        )
+        XCTAssertLessThan(
+            try XCTUnwrap(SemanticVersion("1.2.3")),
+            try XCTUnwrap(SemanticVersion("1.2.4"))
+        )
         XCTAssertNil(SemanticVersion("release-latest"))
     }
 
