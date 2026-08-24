@@ -18,6 +18,8 @@ struct DaySectionView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            DateDividerView(day: day, collapsed: !expanded, onToggle: onToggleDay)
+
             if expanded {
                 LaneMaxHeightLayout(fractions: fractions) {
                     LaneColumnView(entries: day.ideas, lane: .ideas, dayId: day.id, onToggle: onToggle, onStar: onStar)
@@ -25,10 +27,13 @@ struct DaySectionView: View {
                     LaneColumnView(entries: day.work, lane: .work, dayId: day.id, onToggle: onToggle, onStar: onStar)
                 }
                 .overlay { LaneHairlines() }
-                .padding(.bottom, 6)
+                .padding(.top, 6)
+                .padding(.bottom, 8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
-            DateDividerView(day: day, collapsed: !expanded, onToggle: onToggleDay)
         }
+        .clipped()
+        .animation(Theme.motion, value: expanded)
         .background(palette.paper)
         .background {
             GeometryReader { proxy in
