@@ -29,14 +29,14 @@ enum RebaseMarkdown {
         var days: [String: PrototypeDay] = [:]
         var order: [String] = []
         var currentId: String?
-        var currentLane: Lane = .ideas
+        var currentLane: Lane?
 
         for (offset, raw) in text.components(separatedBy: .newlines).enumerated() {
             let lineNumber = offset + 1
             let line = raw.trimmingCharacters(in: .whitespaces)
             let lowercased = line.lowercased()
 
-            if line.isEmpty || lowercased.hasPrefix("# rebase") || line == "To-do list triage." {
+            if line.isEmpty || lowercased == "# rebase" || line == "To-do list triage." {
                 continue
             }
 
@@ -50,7 +50,7 @@ enum RebaseMarkdown {
                 }
 
                 currentId = id
-                currentLane = .ideas
+                currentLane = nil
                 if days[id] == nil {
                     order.append(id)
                     days[id] = parsed
@@ -86,11 +86,23 @@ enum RebaseMarkdown {
                         reason: "Entry appears before a valid day heading."
                     )
                 }
+                guard let lane = currentLane else {
+                    throw RebaseMarkdownParseError(
+                        line: lineNumber,
+                        reason: "Entry appears before an Ideas, Life, or Work heading."
+                    )
+                }
 
                 let bodyLine = String(line.dropFirst(2))
-                working.append(try entry(from: bodyLine, lineNumber: lineNumber), into: currentLane)
+                working.append(try entry(from: bodyLine, lineNumber: lineNumber), into: lane)
                 days[id] = working
+                continue
             }
+
+            throw RebaseMarkdownParseError(
+                line: lineNumber,
+                reason: "Unrecognized content. Expected a Rebase heading or checkbox entry."
+            )
         }
 
         return order.compactMap { days[$0] }
