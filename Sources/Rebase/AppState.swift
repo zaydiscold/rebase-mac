@@ -12,7 +12,11 @@ final class AppState {
     var collapsedMonths: Set<String> = []
     var collapsedDays: Set<String> = []
 
-    init() {
+    private let disclosureStore: TimelineDisclosureStore
+
+    init(disclosureStore: TimelineDisclosureStore = TimelineDisclosureStore()) {
+        self.disclosureStore = disclosureStore
+
         let recentDays = PrototypeData.makeCalendar()
         if let saved = NotesStore.loadDays() {
             days = Self.merge(savedDays: saved, recentDays: recentDays)
@@ -20,9 +24,7 @@ final class AppState {
             days = recentDays
         }
         ensureToday()
-        collapsedMonths = Set(monthSections.filter { Self.monthIsAutoCollapsed($0.id) }.map(\.id))
-        let today = PrototypeData.todayId()
-        collapsedDays = Set(days.filter { $0.isEmpty && $0.id != today }.map(\.id))
+        restoreDisclosureState()
     }
 
     /// Combines the generated recent calendar with every durable saved day.
@@ -62,8 +64,16 @@ final class AppState {
 
     func isMonthExpanded(_ id: String) -> Bool { !collapsedMonths.contains(id) }
     func isDayExpanded(_ id: String) -> Bool { !collapsedDays.contains(id) }
-    func toggleMonth(_ id: String) { collapsedMonths.formSymmetricDifference([id]) }
-    func toggleDay(_ id: String) { collapsedDays.formSymmetricDifference([id]) }
+
+    func toggleMonth(_ id: String) {
+        collapsedMonths.formSymmetricDifference([id])
+        persistDisclosureState()
+    }
+
+    func toggleDay(_ id: String) {
+        collapsedDays.formSymmetricDifference([id])
+        persistDisclosureState()
+    }
 
     private static func monthIsAutoCollapsed(_ key: String) -> Bool {
         let parts = key.split(separator: "-")
@@ -89,6 +99,7 @@ final class AppState {
         collapsedDays.remove(days[0].id)
         draft = ""
         draftImportant = false
+        persistDisclosureState()
         save()
     }
 
@@ -109,9 +120,13 @@ final class AppState {
             } else {
                 days.append(incoming)
             }
+            if !incoming.isEmpty {
+                collapsedDays.remove(incoming.id)
+            }
         }
         days.sort { $0.id > $1.id }
         ensureToday()
+        persistDisclosureState()
         save()
     }
 
@@ -134,6 +149,46 @@ final class AppState {
             work += day.work.filter { !$0.done }.count
         }
         return [.ideas: ideas, .life: life, .work: work]
+    }
+
+    private func restoreDisclosureState() {
+        let dayIds = Set(days.map(\.id))
+        let monthIds = Set(monthSections.map(\.id))
+
+        if let saved = disclosureStore.load() {
+            collapsedDays = saved.collapsedDays.intersection(dayIds)
+            collapsedMonths = saved.collapsedMonths.intersection(monthIds)
+
+            for day in days where !saved.knownDays.contains(day.id) && day.isEmpty {
+                collapsedDays.insert(day.id)
+            }
+            for month in monthSections
+                where !saved.knownMonths.contains(month.id) && Self.monthIsAutoCollapsed(month.id) {
+                collapsedMonths.insert(month.id)
+            }
+        } else {
+            // Empty dates are compact by default. Expanding one is an explicit
+            // choice and will be remembered on the next launch.
+            collapsedDays = Set(days.filter(\.isEmpty).map(\.id))
+            collapsedMonths = Set(
+                monthSections
+                    .filter { Self.monthIsAutoCollapsed($0.id) }
+                    .map(\.id)
+            )
+        }
+
+        persistDisclosureState()
+    }
+
+    private func persistDisclosureState() {
+        disclosureStore.save(
+            TimelineDisclosureSnapshot(
+                collapsedDays: collapsedDays,
+                collapsedMonths: collapsedMonths,
+                knownDays: Set(days.map(\.id)),
+                knownMonths: Set(monthSections.map(\.id))
+            )
+        )
     }
 
     private func mutate(dayId: String, lane: Lane, entryId: String, _ update: (inout PrototypeEntry) -> Void) {
