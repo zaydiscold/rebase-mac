@@ -6,10 +6,16 @@ struct RebaseApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var state = AppState()
     @State private var settings = AppSettings()
+    @State private var updates = UpdateChecker()
 
     var body: some Scene {
         WindowGroup {
             RootView(state: state, settings: settings)
+                .task {
+                    await updates.checkAutomatically(
+                        enabled: settings.checksForUpdatesAutomatically
+                    )
+                }
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1180, height: 780)
@@ -38,7 +44,7 @@ struct RebaseApp: App {
         }
 
         Settings {
-            SettingsView(settings: settings, state: state)
+            SettingsView(settings: settings, state: state, updates: updates)
         }
     }
 }
