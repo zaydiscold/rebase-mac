@@ -6,3 +6,15 @@
 DerivedData/
 /tmp/
 
+# Real Rebase stores and exports must never enter source control.
+**/days.json
+**/settings.json
+**/rebase.md
+**/Backups/
+**/Exports/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Test fixtures are deliberate, reviewed exceptions.
+!Tests/Fixtures/**
