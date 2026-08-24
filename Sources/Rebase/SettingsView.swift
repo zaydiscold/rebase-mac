@@ -1,8 +1,10 @@
 import SwiftUI
 
+@MainActor
 struct SettingsView: View {
     @Bindable var settings: AppSettings
     @Bindable var state: AppState
+    @Bindable var updates: UpdateChecker
     @Environment(\.colorScheme) private var systemScheme
 
     private var palette: Palette {
@@ -87,6 +89,55 @@ struct SettingsView: View {
 
             rule
 
+            settingRow("UPDATES") {
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack(spacing: 8) {
+                        Text(versionLabel)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(palette.muted)
+                            .lineLimit(1)
+                        Spacer(minLength: 12)
+                        Toggle("At launch", isOn: $settings.checksForUpdatesAutomatically)
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                            .font(.system(size: 10))
+                    }
+
+                    HStack(spacing: 7) {
+                        Image(systemName: updates.symbolName)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(updateStatusColor)
+                            .symbolEffect(.rotate, options: .repeating, isActive: updates.isChecking)
+                        Text(updates.message)
+                            .font(.system(size: 11))
+                            .foregroundStyle(palette.muted)
+                            .lineLimit(2)
+                    }
+
+                    HStack(spacing: 7) {
+                        actionButton(updates.isChecking ? "Checking…" : "Check now") {
+                            Task { await updates.check() }
+                        }
+                        .disabled(updates.isChecking)
+                        .opacity(updates.isChecking ? 0.62 : 1)
+
+                        if let actionTitle = updates.actionTitle {
+                            actionButton(actionTitle) {
+                                updates.openAvailableUpdate()
+                            }
+                        }
+                    }
+
+                    Text("Checks GitHub only. It never writes to or replaces ~/Documents/Rebase.")
+                        .font(.system(size: 10))
+                        .foregroundStyle(palette.muted.opacity(0.78))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(width: 330)
+            }
+
+            rule
+
             settingRow("FILES") {
                 VStack(alignment: .leading, spacing: 9) {
                     Text("~/Documents/Rebase  ·  days.json + rebase.md")
@@ -105,11 +156,32 @@ struct SettingsView: View {
             }
         }
         .padding(24)
-        .frame(width: 540, height: 430)
+        .frame(width: 575, height: 570)
         .foregroundStyle(palette.ink)
         .tint(settings.accent.color)
         .background { palette.paper.ignoresSafeArea() }
         .preferredColorScheme(settings.colorScheme)
+    }
+
+    private var versionLabel: String {
+        let commit = updates.currentCommit
+        if commit == "unknown" {
+            return "v\(updates.currentVersion)"
+        }
+        return "v\(updates.currentVersion) · \(String(commit.prefix(7)))"
+    }
+
+    private var updateStatusColor: Color {
+        switch updates.status {
+        case .releaseAvailable, .sourceAvailable:
+            settings.accent.color
+        case .failed:
+            Theme.star
+        case .current:
+            palette.ink.opacity(0.72)
+        default:
+            palette.muted
+        }
     }
 
     private var rule: some View {

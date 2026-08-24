@@ -29,6 +29,7 @@ final class AppSettings {
     var ideasShare: Double = 0.37 { didSet { save() } }
     var lifeShare: Double = 0.37 { didSet { save() } }
     var bodySize: Double = 16 { didSet { save() } }
+    var checksForUpdatesAutomatically = true { didSet { save() } }
 
     var colorScheme: ColorScheme? { appearance.colorScheme }
 
@@ -52,6 +53,7 @@ final class AppSettings {
         ideasShare = shares.ideas
         lifeShare = shares.life
         bodySize = Self.normalizedBodySize(loaded.bodySize)
+        checksForUpdatesAutomatically = loaded.checksForUpdatesAutomatically ?? true
 
         // Persist repaired values and fill optional defaults from older settings files.
         save()
@@ -126,6 +128,7 @@ final class AppSettings {
         var ideasShare: Double
         var lifeShare: Double
         var bodySize: Double?
+        var checksForUpdatesAutomatically: Bool?
     }
 
     private static var fileURL: URL { NotesStore.folder.appendingPathComponent("settings.json") }
@@ -136,7 +139,14 @@ final class AppSettings {
     }
 
     private func save() {
-        let file = File(appearance: appearance, accent: accent, ideasShare: ideasShare, lifeShare: lifeShare, bodySize: bodySize)
+        let file = File(
+            appearance: appearance,
+            accent: accent,
+            ideasShare: ideasShare,
+            lifeShare: lifeShare,
+            bodySize: bodySize,
+            checksForUpdatesAutomatically: checksForUpdatesAutomatically
+        )
         guard let data = try? JSONEncoder().encode(file) else { return }
         try? data.write(to: Self.fileURL, options: .atomic)
     }
@@ -231,7 +241,7 @@ enum NotesStore {
 
         days.json   source of truth (Ideas / Life / Work)
         rebase.md   same notes as markdown, for a work computer or an agent
-        settings.json   appearance, accent, columns, type size
+        settings.json   appearance, accent, columns, type size, update checks
 
         Rebuilding the app does not touch this folder.
         Timezone grouping is America/Los_Angeles.

@@ -42,10 +42,15 @@ asterisk; normal tasks use a quiet slate asterisk. Completed tasks use a thin
 strike and one line of text. Double-click the task text to change its completion
 state without making an accidental single click destructive.
 
-The newest day sits at the top. Each full-width date rule closes the shared day
-row above it. Click a date to collapse that day. A collapsed day only shows lane
-pips for unfinished work. Empty and fully completed old days do not keep three
-meaningless dots on screen.
+The newest day sits at the top. A date row is the handle for that day's drawer:
+click it and the three lanes open below the date rather than pushing the clicked
+row downward. Empty dates start compact. Explicit day and month disclosure
+choices survive quit and relaunch.
+
+Collapsed dates communicate their state without turning into a dashboard:
+filled lane pips and an open count mean unresolved entries exist, a check means
+the day has entries but none remain open, and a faint hollow pip means the day
+is empty.
 
 ## Make it yours
 
@@ -55,11 +60,31 @@ Open Settings with `Command-,` or the gear beside the capture field. You can:
 - Pick orange, violet, lilac, or ice as the accent.
 - Change the reading size.
 - Resize the Ideas, Life, and Work lanes.
+- Check for updates automatically or manually.
 - Export or import Markdown.
 
-The accent appears on the active lane, the compact bottom switcher, and the
-horizontal and vertical timeline rules. Light mode uses the same `#F1E9D2`
+The accent appears on the active lane, the compact bottom switcher, date drawers,
+settings controls, and timeline rules. Light mode uses the same `#F1E9D2`
 parchment as zayd.wtf.
+
+## Update checks
+
+The Settings update row compares the packaged version and embedded Git commit
+with the latest GitHub release and the current `main` commit. It can report:
+
+- The installed build is current.
+- A newer packaged release is available.
+- New source exists on `main` but has not been released yet.
+- No release has been published.
+- The network check failed.
+
+The action opens the relevant GitHub release or commit in the browser. Rebase
+does not replace its own app bundle yet. Signed and notarized distribution is
+tracked separately in issue #23.
+
+Update checks never read, write, migrate, replace, or delete anything under
+`~/Documents/Rebase`. Automatic checks can be disabled in Settings, and ordinary
+capture remains completely local.
 
 ## Your files
 
@@ -68,7 +93,7 @@ Rebase keeps its data in Documents:
 ```text
 ~/Documents/Rebase/days.json       source of truth
 ~/Documents/Rebase/rebase.md       generated Markdown sidecar
-~/Documents/Rebase/settings.json   appearance and layout
+~/Documents/Rebase/settings.json   appearance, layout, and update preference
 ```
 
 `rebase.md` keeps each day as a heading and each lane as a section. Every entry
