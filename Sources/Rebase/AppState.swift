@@ -129,7 +129,7 @@ final class AppState {
         var ideas = 0, life = 0, work = 0
         for day in days {
             guard let frame = dayFrames[day.id], frame.minY > visible.maxY - 4 else { continue }
-            ideas += day.ideas.count
+            ideas += day.ideas.filter { !$0.done }.count
             life += day.life.filter { !$0.done }.count
             work += day.work.filter { !$0.done }.count
         }

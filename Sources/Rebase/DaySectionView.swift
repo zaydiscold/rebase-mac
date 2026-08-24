@@ -18,7 +18,6 @@ struct DaySectionView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            DateDividerView(day: day, collapsed: !expanded, onToggle: onToggleDay)
             if expanded {
                 LaneMaxHeightLayout(fractions: fractions) {
                     LaneColumnView(entries: day.ideas, lane: .ideas, dayId: day.id, onToggle: onToggle, onStar: onStar)
@@ -28,6 +27,7 @@ struct DaySectionView: View {
                 .overlay { LaneHairlines() }
                 .padding(.bottom, 6)
             }
+            DateDividerView(day: day, collapsed: !expanded, onToggle: onToggleDay)
         }
         .background(palette.paper)
         .background {
