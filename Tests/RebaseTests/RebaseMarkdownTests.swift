@@ -105,6 +105,22 @@ final class RebaseMarkdownTests: XCTestCase {
         }
     }
 
+    func testEntryBeforeLaneFailsInsteadOfDefaultingToIdeas() {
+        let text = """
+        # rebase
+        ## 2026-08-23
+        - [ ] Do not guess my lane
+        """
+
+        XCTAssertThrowsError(try RebaseMarkdown.parse(text)) { error in
+            guard let parseError = error as? RebaseMarkdownParseError else {
+                return XCTFail("Unexpected error type: \(error)")
+            }
+            XCTAssertEqual(parseError.line, 3)
+            XCTAssertTrue(parseError.reason.contains("Ideas, Life, or Work"))
+        }
+    }
+
     func testMalformedCheckboxFailsInsteadOfBecomingBodyText() {
         let text = """
         # rebase
@@ -119,6 +135,40 @@ final class RebaseMarkdownTests: XCTestCase {
             }
             XCTAssertEqual(parseError.line, 4)
             XCTAssertTrue(parseError.reason.contains("must begin"))
+        }
+    }
+
+    func testUnrecognizedContentFailsInsteadOfDisappearing() {
+        let text = """
+        # rebase
+        ## 2026-08-23
+        ### Ideas
+        This line must not disappear.
+        """
+
+        XCTAssertThrowsError(try RebaseMarkdown.parse(text)) { error in
+            guard let parseError = error as? RebaseMarkdownParseError else {
+                return XCTFail("Unexpected error type: \(error)")
+            }
+            XCTAssertEqual(parseError.line, 4)
+            XCTAssertTrue(parseError.reason.contains("Unrecognized content"))
+        }
+    }
+
+    func testDocumentHeadingMustBeExact() {
+        let text = """
+        # rebase notes that should not be ignored
+        ## 2026-08-23
+        ### Ideas
+        - [ ] Entry
+        """
+
+        XCTAssertThrowsError(try RebaseMarkdown.parse(text)) { error in
+            guard let parseError = error as? RebaseMarkdownParseError else {
+                return XCTFail("Unexpected error type: \(error)")
+            }
+            XCTAssertEqual(parseError.line, 1)
+            XCTAssertTrue(parseError.reason.contains("Unrecognized content"))
         }
     }
 }
