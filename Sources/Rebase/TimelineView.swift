@@ -31,6 +31,9 @@ struct TimelineView: View {
                                     },
                                     onStar: { dayId, lane, entryId in
                                         state.toggleImportant(dayId: dayId, lane: lane, entryId: entryId)
+                                    },
+                                    onEdit: { dayId, lane, entryId, body in
+                                        state.editEntry(dayId: dayId, lane: lane, entryId: entryId, body: body)
                                     }
                                 )
                                 .id(day.id)
