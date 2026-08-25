@@ -21,8 +21,8 @@ struct DateDividerView: View {
                     .frame(width: 10)
                     .padding(.leading, 14)
 
-                Text(hovering ? day.fullDate : day.stamp)
-                    .font(Theme.stampFont)
+                Text(displayDate)
+                    .font(dateFont)
                     .monospacedDigit()
                     .foregroundStyle(dateColor)
 
@@ -42,7 +42,7 @@ struct DateDividerView: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help(collapsed ? "Expand \(day.stamp) downward" : "Collapse \(day.stamp)")
+        .help(collapsed ? "Expand \(day.fullDate) downward" : "Collapse \(day.fullDate)")
         .accessibilityLabel(accessibilityDescription)
     }
 
@@ -84,6 +84,20 @@ struct DateDividerView: View {
         Circle()
             .fill(hasOpenEntry ? palette.ink.opacity(0.78) : palette.muted.opacity(0.16))
             .frame(width: 4, height: 4)
+    }
+
+    private var displayDate: String {
+        collapsed && !hovering ? day.stamp : day.fullDate
+    }
+
+    private var dateFont: Font {
+        if !collapsed {
+            return .system(size: 12, weight: .semibold, design: .serif)
+        }
+        if hovering {
+            return .system(size: 12, weight: .medium, design: .serif)
+        }
+        return Theme.stampFont
     }
 
     private var openCounts: (ideas: Int, life: Int, work: Int) {
