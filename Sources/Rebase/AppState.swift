@@ -111,6 +111,12 @@ final class AppState {
         mutate(dayId: dayId, lane: lane, entryId: entryId) { $0.important.toggle() }
     }
 
+    func editEntry(dayId: String, lane: Lane, entryId: String, body: String) {
+        let text = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        mutate(dayId: dayId, lane: lane, entryId: entryId) { $0.body = text }
+    }
+
     func applyMarkdown(_ imported: [PrototypeDay]) {
         for incoming in imported {
             if let i = days.firstIndex(where: { $0.id == incoming.id }) {
