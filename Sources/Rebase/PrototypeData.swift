@@ -2,7 +2,7 @@ import Foundation
 
 struct PrototypeEntry: Identifiable, Codable {
     let id: String
-    let body: String
+    var body: String
     var done: Bool
     var important: Bool
 
@@ -35,7 +35,38 @@ struct PrototypeDay: Identifiable, Codable {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = comps.timeZone ?? .current
         guard let date = cal.date(from: comps) else { return stamp }
-        return date.formatted(.dateTime.weekday(.wide).month(.wide).day().year().locale(Locale(identifier: "en_US")))
+
+        let weekdayNames = ["", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        let monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+        let weekdayIndex = cal.component(.weekday, from: date)
+        let monthIndex = cal.component(.month, from: date)
+        let dayValue = cal.component(.day, from: date)
+        let yearValue = cal.component(.year, from: date)
+
+        guard weekdayNames.indices.contains(weekdayIndex),
+              monthNames.indices.contains(monthIndex) else {
+            return stamp
+        }
+
+        return "\(weekdayNames[weekdayIndex]), \(monthNames[monthIndex]) \(Self.ordinalDay(dayValue)), \(yearValue)"
+    }
+
+    static func ordinalDay(_ value: Int) -> String {
+        let remainder100 = value % 100
+        let suffix: String
+
+        if (11...13).contains(remainder100) {
+            suffix = "th"
+        } else {
+            switch value % 10 {
+            case 1: suffix = "st"
+            case 2: suffix = "nd"
+            case 3: suffix = "rd"
+            default: suffix = "th"
+            }
+        }
+
+        return "\(value)\(suffix)"
     }
 
     func entries(in lane: Lane) -> [PrototypeEntry] {
