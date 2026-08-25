@@ -39,13 +39,15 @@ stays out of the way, and the same lanes are available through `Command-1`,
 
 Every entry is a task with a checkbox. Important tasks use a bright red
 asterisk; normal tasks use a quiet slate asterisk. Completed tasks use a thin
-strike and one line of text. Double-click the task text to change its completion
-state without making an accidental single click destructive.
+strike and one line of text. Right-click an entry and choose **Edit**, or
+double-click its text to edit in place. Return saves an edit and Escape cancels;
+the checkbox remains the explicit completion control.
 
 The newest day sits at the top. A date row is the handle for that day's drawer:
 click it and the three lanes open below the date rather than pushing the clicked
-row downward. Empty dates start compact. Explicit day and month disclosure
-choices survive quit and relaunch.
+row downward. Collapsed rows stay compact, such as `8 · 23 · 26`. Expanded rows
+spell out the hierarchy, such as `Sunday, August 23rd, 2026`. Empty dates start
+compact, and explicit day and month disclosure choices survive quit and relaunch.
 
 Collapsed dates communicate their state without turning into a dashboard:
 filled lane pips and an open count mean unresolved entries exist, a check means

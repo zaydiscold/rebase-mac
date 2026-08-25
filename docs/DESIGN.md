@@ -39,8 +39,12 @@ Ideas, Life, and Work all use the same task treatment:
 - A bright red asterisk on the right when marked important.
 - A quiet slate asterisk otherwise.
 
-A checkbox toggles immediately. Double-clicking the task text performs the same
-action while preventing accidental single-click completion.
+The resting row stays almost entirely textual. Editing is hidden behind the
+natural Mac gestures instead of adding another permanent icon: right-click and
+choose Edit, or double-click the text. The row becomes a restrained inline field
+with one accent rule; Return saves and Escape cancels. The checkbox remains the
+only direct completion gesture, so double-clicking text can no longer resolve an
+entry accidentally.
 
 ## Timeline
 
@@ -51,6 +55,11 @@ space.
 Each date row is a disclosure handle above its content. Expanding the date keeps
 the clicked row in place and reveals the shared three-lane day below it like a
 quiet drawer. It never inserts content above the control the user clicked.
+
+Date text creates hierarchy without adding another header. Collapsed rows use
+the compact numeric stamp, such as `8 · 23 · 26`. Expanded rows remain fully
+spelled out, such as `Sunday, August 23rd, 2026`, until they are collapsed again.
+Hover may temporarily reveal the full date on a collapsed row.
 
 Date state remains readable while collapsed:
 

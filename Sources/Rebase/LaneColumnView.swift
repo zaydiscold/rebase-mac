@@ -6,6 +6,7 @@ struct LaneColumnView: View {
     var dayId: String
     var onToggle: ((String, Lane, String) -> Void)?
     var onStar: ((String, Lane, String) -> Void)?
+    var onEdit: ((String, Lane, String, String) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -16,7 +17,8 @@ struct LaneColumnView: View {
                     EntryRowView(
                         entry: entry,
                         onToggle: { onToggle?(dayId, lane, entry.id) },
-                        onStar: { onStar?(dayId, lane, entry.id) }
+                        onStar: { onStar?(dayId, lane, entry.id) },
+                        onEdit: { body in onEdit?(dayId, lane, entry.id, body) }
                     )
                     .transition(.opacity.combined(with: .offset(y: -4)))
                 }

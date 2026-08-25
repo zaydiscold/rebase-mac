@@ -13,6 +13,7 @@ struct DaySectionView: View {
     var onToggleDay: () -> Void
     var onToggle: ((String, Lane, String) -> Void)?
     var onStar: ((String, Lane, String) -> Void)?
+    var onEdit: ((String, Lane, String, String) -> Void)?
     @Environment(\.palette) private var palette
     @Environment(\.laneFractions) private var fractions
 
@@ -22,9 +23,9 @@ struct DaySectionView: View {
 
             if expanded {
                 LaneMaxHeightLayout(fractions: fractions) {
-                    LaneColumnView(entries: day.ideas, lane: .ideas, dayId: day.id, onToggle: onToggle, onStar: onStar)
-                    LaneColumnView(entries: day.life, lane: .life, dayId: day.id, onToggle: onToggle, onStar: onStar)
-                    LaneColumnView(entries: day.work, lane: .work, dayId: day.id, onToggle: onToggle, onStar: onStar)
+                    LaneColumnView(entries: day.ideas, lane: .ideas, dayId: day.id, onToggle: onToggle, onStar: onStar, onEdit: onEdit)
+                    LaneColumnView(entries: day.life, lane: .life, dayId: day.id, onToggle: onToggle, onStar: onStar, onEdit: onEdit)
+                    LaneColumnView(entries: day.work, lane: .work, dayId: day.id, onToggle: onToggle, onStar: onStar, onEdit: onEdit)
                 }
                 .overlay { LaneHairlines() }
                 .padding(.top, 6)

@@ -4,13 +4,57 @@ struct EntryRowView: View {
     let entry: PrototypeEntry
     var onToggle: (() -> Void)?
     var onStar: (() -> Void)?
+    var onEdit: ((String) -> Void)?
+    @State private var editing = false
+    @State private var editDraft = ""
+    @FocusState private var editFocused: Bool
     @Environment(\.palette) private var palette
+    @Environment(\.accent) private var accent
     @Environment(\.bodySize) private var bodySize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             leadingMark
+            entryContent
+            starButton
+        }
+        .padding(.vertical, entry.done ? 2 : 4)
+        .padding(.horizontal, 16)
+        .contentShape(Rectangle())
+        .background(editing ? accent.color.opacity(0.055) : Color.clear)
+        .contextMenu {
+            if !editing, onEdit != nil {
+                Button("Edit") {
+                    beginEditing()
+                }
+            }
+        }
+        .animation(reduceMotion ? nil : Theme.motion, value: entry.done)
+        .animation(reduceMotion ? nil : Theme.motion, value: editing)
+        .opacity(entry.done && !editing ? 0.72 : 1)
+    }
+
+    @ViewBuilder
+    private var entryContent: some View {
+        if editing {
+            TextField("Edit entry", text: $editDraft)
+                .textFieldStyle(.plain)
+                .font(.system(size: bodySize, weight: .regular, design: .serif))
+                .foregroundStyle(palette.ink)
+                .focused($editFocused)
+                .onSubmit { commitEdit() }
+                .onExitCommand { cancelEdit() }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(accent.color.opacity(0.68))
+                        .frame(height: 1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .help("Return saves. Escape cancels.")
+        } else {
             Text(entry.body)
                 .font(.system(size: bodySize, weight: .regular, design: .serif))
                 .foregroundStyle(entry.done ? palette.muted : palette.ink)
@@ -19,14 +63,10 @@ struct EntryRowView: View {
                 .truncationMode(.tail)
                 .fixedSize(horizontal: false, vertical: !entry.done)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            starButton
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2) { beginEditing() }
+                .help(onEdit == nil ? entry.body : "Double-click or right-click to edit")
         }
-        .padding(.vertical, entry.done ? 2 : 4)
-        .padding(.horizontal, 16)
-        .contentShape(Rectangle())
-        .onTapGesture(count: 2) { onToggle?() }
-        .animation(reduceMotion ? nil : Theme.motion, value: entry.done)
-        .opacity(entry.done ? 0.72 : 1)
     }
 
     private var starButton: some View {
@@ -48,7 +88,6 @@ struct EntryRowView: View {
         .accessibilityLabel(entry.important ? "Important task" : "Normal task")
     }
 
-
     private var leadingMark: some View {
         Button {
             onToggle?()
@@ -59,5 +98,34 @@ struct EntryRowView: View {
         }
         .buttonStyle(.plain)
         .help(entry.done ? "Mark open" : "Mark done")
+    }
+
+    private func beginEditing() {
+        guard onEdit != nil else { return }
+        editDraft = entry.body
+        editing = true
+        DispatchQueue.main.async {
+            editFocused = true
+        }
+    }
+
+    private func commitEdit() {
+        let cleaned = editDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else {
+            cancelEdit()
+            return
+        }
+
+        editFocused = false
+        editing = false
+        if cleaned != entry.body {
+            onEdit?(cleaned)
+        }
+    }
+
+    private func cancelEdit() {
+        editFocused = false
+        editDraft = entry.body
+        editing = false
     }
 }
